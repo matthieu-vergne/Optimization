@@ -1,0 +1,53 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>fr.vergne.optimization</groupId>
+	<artifactId>optimization-project</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>pom</packaging>
+	<name>Optimization Project</name>
+	<description>User-friendly optimization algorithms.</description>
+	<inceptionYear>2014</inceptionYear>
+
+	<issueManagement>
+		<system>GitHub</system>
+		<url>https://github.com/matthieu-vergne/Optimization/issues/</url>
+	</issueManagement>
+
+	<licenses>
+		<license>
+			<name>BSD</name>
+			<url>http://www.freebsd.org/copyright/license.html</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	<developers>
+		<developer>
+			<name>Matthieu Vergne</name>
+			<email>matthieu_DOT_vergne@(nospam)gmail_DOT_com</email>
+			<url>https://github.com/matthieu-vergne</url>
+		</developer>
+	</developers>
+	<scm>
+		<connection>scm:git:git://github.com/matthieu-vergne/Optimization.git</connection>
+		<developerConnection>scm:git:git@github.com:${github.username}/Optimization.git</developerConnection>
+		<url>https://github.com/matthieu-vergne/Optimization</url>
+	</scm>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.3.2</version>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<modules>
+		<module>optimization-core</module>
+		<module>optimization-samples</module>
+	</modules>
+</project>
