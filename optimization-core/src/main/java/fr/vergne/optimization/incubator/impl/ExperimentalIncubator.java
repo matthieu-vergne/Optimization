@@ -327,7 +327,9 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 
 		public double getOptimalityWith(Mutator<Individual> mutator) {
 			Integer loops = neighborLoops.get(mutator);
-			if (loops == null || loops == 0) {
+			if (!mutator.isApplicableOn(representative)) {
+				return 1;
+			} else if (loops == null || loops == 0) {
 				return 0;
 			} else {
 				// double victories = getVictoriesAgainst(mutator);
