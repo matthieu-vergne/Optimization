@@ -8,13 +8,11 @@ package fr.vergne.optimization.generator;
  * 
  * @param <Individual>
  */
-public interface Mutator<Individual> extends Generator<Individual>,
-		RestrictedUsability<Individual> {
+public interface Mutator<Individual> extends Generator<Individual, Individual> {
+	
+	@Override
+	public boolean isApplicableOn(Individual original);
 
-	/**
-	 * 
-	 * @param reference
-	 *            the {@link Individual} to create a mutant from
-	 */
-	public void setReference(Individual reference);
+	@Override
+	public Individual generates(Individual original);
 }

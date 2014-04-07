@@ -13,11 +13,9 @@ import java.util.List;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import fr.vergne.optimization.generator.Generator;
+import fr.vergne.optimization.generator.Explorator;
 import fr.vergne.optimization.generator.Mutator;
-import fr.vergne.optimization.incubator.impl.ExperimentalIncubator;
 import fr.vergne.optimization.population.Evaluator;
-import fr.vergne.optimization.population.impl.CompetitionManager;
 
 public class ExperimentalIncubatorTest {
 
@@ -28,81 +26,71 @@ public class ExperimentalIncubatorTest {
 			return individual;
 		}
 	};
-	Generator<Integer> randomGenerator = new Generator<Integer>() {
+	Explorator<Integer> randomExplorator = new Explorator<Integer>() {
 
 		private final LinkedList<Integer> sequence = new LinkedList<Integer>(
 				Arrays.asList(3, 6, 1, 4, 2, 4, 5, 6, 9, 2, 3, 8));
 
 		@Override
-		public Integer generates() {
+		public boolean isApplicableOn(Collection<Integer> population) {
+			return true;
+		}
+
+		@Override
+		public Integer generates(Collection<Integer> population) {
 			Collections.rotate(sequence, -1);
 			return sequence.getFirst();
 		}
 	};
 	Mutator<Integer> mutatorPlusOne = new Mutator<Integer>() {
 
-		private Integer reference;
-
 		@Override
-		public boolean isApplicableOn(Integer input) {
+		public boolean isApplicableOn(Integer original) {
 			return true;
 		}
 
 		@Override
-		public void setReference(Integer reference) {
-			this.reference = reference;
-		}
-
-		@Override
-		public Integer generates() {
-			return reference + 1;
+		public Integer generates(Integer original) {
+			return original + 1;
 		}
 	};
 	Mutator<Integer> mutatorModulo = new Mutator<Integer>() {
 
-		private Integer reference;
-
 		@Override
-		public boolean isApplicableOn(Integer input) {
+		public boolean isApplicableOn(Integer original) {
 			return true;
 		}
 
 		@Override
-		public void setReference(Integer reference) {
-			this.reference = reference;
-		}
-
-		@Override
-		public Integer generates() {
-			return reference * 2 % 10;
+		public Integer generates(Integer original) {
+			return original * 2 % 10;
 		}
 	};
 
 	@Test
 	public void testRandomGenerator() {
 		for (int i = 0; i < 10; i++) {
-			assertEquals(6, (int) randomGenerator.generates());
-			assertEquals(1, (int) randomGenerator.generates());
-			assertEquals(4, (int) randomGenerator.generates());
-			assertEquals(2, (int) randomGenerator.generates());
-			assertEquals(4, (int) randomGenerator.generates());
-			assertEquals(5, (int) randomGenerator.generates());
-			assertEquals(6, (int) randomGenerator.generates());
-			assertEquals(9, (int) randomGenerator.generates());
-			assertEquals(2, (int) randomGenerator.generates());
-			assertEquals(3, (int) randomGenerator.generates());
-			assertEquals(8, (int) randomGenerator.generates());
-			assertEquals(3, (int) randomGenerator.generates());
+			assertEquals(6, (int) randomExplorator.generates(null));
+			assertEquals(1, (int) randomExplorator.generates(null));
+			assertEquals(4, (int) randomExplorator.generates(null));
+			assertEquals(2, (int) randomExplorator.generates(null));
+			assertEquals(4, (int) randomExplorator.generates(null));
+			assertEquals(5, (int) randomExplorator.generates(null));
+			assertEquals(6, (int) randomExplorator.generates(null));
+			assertEquals(9, (int) randomExplorator.generates(null));
+			assertEquals(2, (int) randomExplorator.generates(null));
+			assertEquals(3, (int) randomExplorator.generates(null));
+			assertEquals(8, (int) randomExplorator.generates(null));
+			assertEquals(3, (int) randomExplorator.generates(null));
 		}
 	}
 
 	@Test
 	public void testMutatorPlusOne() {
 		for (int i = 0; i < 100; i++) {
-			int individual = randomGenerator.generates();
-			mutatorPlusOne.setReference(individual);
+			int individual = randomExplorator.generates(null);
 			for (int j = 0; j < 10; j++) {
-				int mutant = mutatorPlusOne.generates();
+				int mutant = mutatorPlusOne.generates(individual);
 				assertEquals(individual + 1, mutant);
 			}
 		}
@@ -112,71 +100,55 @@ public class ExperimentalIncubatorTest {
 	public void testMutatorModulo() {
 		int individual = 3;
 
-		mutatorModulo.setReference(individual);
-		individual = mutatorModulo.generates();
+		individual = mutatorModulo.generates(individual);
 		assertEquals(6, individual);
 
-		mutatorModulo.setReference(individual);
-		individual = mutatorModulo.generates();
+		individual = mutatorModulo.generates(individual);
 		assertEquals(2, individual);
 
-		mutatorModulo.setReference(individual);
-		individual = mutatorModulo.generates();
+		individual = mutatorModulo.generates(individual);
 		assertEquals(4, individual);
 
-		mutatorModulo.setReference(individual);
-		individual = mutatorModulo.generates();
+		individual = mutatorModulo.generates(individual);
 		assertEquals(8, individual);
 
-		mutatorModulo.setReference(individual);
-		individual = mutatorModulo.generates();
+		individual = mutatorModulo.generates(individual);
 		assertEquals(6, individual);
 	}
 
 	@Test
-	public void testPopulationManager() {
+	public void testMutators() {
+		@SuppressWarnings("unchecked")
+		List<Mutator<Integer>> mutators = Arrays.asList(mutatorPlusOne,
+				mutatorModulo);
 		ExperimentalIncubator<Integer> manager = new ExperimentalIncubator<Integer>(
 				integerEvaluator);
-		manager.addGenerator(randomGenerator);
-		manager.addGenerator(mutatorPlusOne);
-		manager.addGenerator(mutatorModulo);
-		@SuppressWarnings("unchecked")
-		CompetitionManager<?, Integer> populationManager = (CompetitionManager<?, Integer>) manager
-				.getPopulationManager();
-
-		populationManager.push(2);
-		assertEquals(1, populationManager.size());
-		assertEquals(2, (int) populationManager.getBest().next());
-
-		populationManager.push(1);
-		assertEquals(1, populationManager.size());
-		assertEquals(1, (int) populationManager.getBest().next());
-
-		populationManager.push(1);
-		assertEquals(1, populationManager.size());
-		assertEquals(1, (int) populationManager.getBest().next());
-
-		populationManager.push(3);
-		assertEquals(1, populationManager.size());
-		assertEquals(1, (int) populationManager.getBest().next());
+		for (Mutator<Integer> mutator : mutators) {
+			manager.addMutator(mutator);
+		}
+		Collection<Mutator<Integer>> mutators2 = manager.getMutators();
+		assertTrue(
+				mutators2 + " != " + mutators,
+				mutators.size() == mutators2.size()
+						&& mutators.containsAll(mutators2)
+						&& mutators2.containsAll(mutators));
 	}
 
 	@Test
-	public void testGenerators() {
+	public void testExplorators() {
 		@SuppressWarnings("unchecked")
-		List<Generator<Integer>> generators = Arrays.asList(randomGenerator,
-				mutatorPlusOne, mutatorModulo);
+		List<Explorator<Integer>> explorators = Arrays.asList(randomExplorator);
 		ExperimentalIncubator<Integer> manager = new ExperimentalIncubator<Integer>(
 				integerEvaluator);
-		for (Generator<Integer> generator : generators) {
-			manager.addGenerator(generator);
+		for (Explorator<Integer> explorator : explorators) {
+			manager.addExplorator(explorator);
 		}
-		Collection<Generator<Integer>> generators2 = manager.getGenerators();
+		Collection<Explorator<Integer>> explorators2 = manager.getExplorators();
 		assertTrue(
-				generators2 + " != " + generators,
-				generators.size() == generators2.size()
-						&& generators.containsAll(generators2)
-						&& generators2.containsAll(generators));
+				explorators2 + " != " + explorators,
+				explorators.size() == explorators2.size()
+						&& explorators.containsAll(explorators2)
+						&& explorators2.containsAll(explorators));
 	}
 
 	private static class CallData {
@@ -192,19 +164,25 @@ public class ExperimentalIncubatorTest {
 	@Test
 	public void testIncubationGeneratorCalls() {
 		final CallData calls = new CallData();
-		Generator<Integer> randomGenerator = new Generator<Integer>() {
+		Explorator<Integer> randomExplorator = new Explorator<Integer>() {
 
 			@Override
-			public Integer generates() {
+			public boolean isApplicableOn(Collection<Integer> population) {
+				return ExperimentalIncubatorTest.this.randomExplorator
+						.isApplicableOn(population);
+			}
+
+			@Override
+			public Integer generates(Collection<Integer> population) {
 				calls.call();
-				return ExperimentalIncubatorTest.this.randomGenerator
-						.generates();
+				return ExperimentalIncubatorTest.this.randomExplorator
+						.generates(population);
 			}
 		};
 
 		ExperimentalIncubator<Integer> manager = new ExperimentalIncubator<Integer>(
 				integerEvaluator);
-		manager.addGenerator(randomGenerator);
+		manager.addExplorator(randomExplorator);
 
 		calls.expected = 1;
 		manager.incubate();
@@ -220,34 +198,29 @@ public class ExperimentalIncubatorTest {
 		Mutator<Integer> mutatorModulo = new Mutator<Integer>() {
 
 			@Override
-			public boolean isApplicableOn(Integer input) {
+			public boolean isApplicableOn(Integer original) {
 				return ExperimentalIncubatorTest.this.mutatorModulo
-						.isApplicableOn(input);
+						.isApplicableOn(original);
 			}
 
 			@Override
-			public void setReference(Integer reference) {
-				ExperimentalIncubatorTest.this.mutatorModulo
-						.setReference(reference);
-			}
-
-			@Override
-			public Integer generates() {
+			public Integer generates(Integer original) {
 				calls.call();
-				return ExperimentalIncubatorTest.this.mutatorModulo.generates();
+				return ExperimentalIncubatorTest.this.mutatorModulo
+						.generates(original);
 			}
 		};
 
 		ExperimentalIncubator<Integer> manager = new ExperimentalIncubator<Integer>(
 				integerEvaluator);
-		manager.addGenerator(mutatorModulo);
+		manager.addMutator(mutatorModulo);
 
 		calls.expected = 0;
 		manager.incubate();
 		manager.incubate();
 		manager.incubate();
 		calls.expected = 1;
-		manager.getPopulationManager().push(1);
+		manager.push(1);
 		manager.incubate();
 		calls.expected = 2;
 		manager.incubate();
@@ -258,33 +231,34 @@ public class ExperimentalIncubatorTest {
 	@Test
 	public void testIncubationTotalGeneratorCalls() {
 		final CallData calls = new CallData();
-		Generator<Integer> randomGenerator = new Generator<Integer>() {
+		Explorator<Integer> randomExplorator = new Explorator<Integer>() {
 
 			@Override
-			public Integer generates() {
+			public boolean isApplicableOn(Collection<Integer> population) {
+				return ExperimentalIncubatorTest.this.randomExplorator
+						.isApplicableOn(population);
+			}
+
+			@Override
+			public Integer generates(Collection<Integer> population) {
 				calls.call();
-				return ExperimentalIncubatorTest.this.randomGenerator
-						.generates();
+				return ExperimentalIncubatorTest.this.randomExplorator
+						.generates(population);
 			}
 		};
 		Mutator<Integer> mutatorModulo = new Mutator<Integer>() {
 
 			@Override
-			public boolean isApplicableOn(Integer input) {
+			public boolean isApplicableOn(Integer original) {
 				return ExperimentalIncubatorTest.this.mutatorModulo
-						.isApplicableOn(input);
+						.isApplicableOn(original);
 			}
 
 			@Override
-			public void setReference(Integer reference) {
-				ExperimentalIncubatorTest.this.mutatorModulo
-						.setReference(reference);
-			}
-
-			@Override
-			public Integer generates() {
+			public Integer generates(Integer original) {
 				calls.call();
-				return ExperimentalIncubatorTest.this.mutatorModulo.generates();
+				return ExperimentalIncubatorTest.this.mutatorModulo
+						.generates(original);
 			}
 		};
 		Mutator<Integer> mutatorPlusOne = new Mutator<Integer>() {
@@ -296,24 +270,18 @@ public class ExperimentalIncubatorTest {
 			}
 
 			@Override
-			public void setReference(Integer reference) {
-				ExperimentalIncubatorTest.this.mutatorPlusOne
-						.setReference(reference);
-			}
-
-			@Override
-			public Integer generates() {
+			public Integer generates(Integer original) {
 				calls.call();
 				return ExperimentalIncubatorTest.this.mutatorPlusOne
-						.generates();
+						.generates(original);
 			}
 		};
 
 		ExperimentalIncubator<Integer> manager = new ExperimentalIncubator<Integer>(
 				integerEvaluator);
-		manager.addGenerator(randomGenerator);
-		manager.addGenerator(mutatorPlusOne);
-		manager.addGenerator(mutatorModulo);
+		manager.addExplorator(randomExplorator);
+		manager.addMutator(mutatorPlusOne);
+		manager.addMutator(mutatorModulo);
 
 		calls.expected = 1;
 		manager.incubate();
@@ -327,100 +295,97 @@ public class ExperimentalIncubatorTest {
 	public void testPopulationSizeWithGenerator() {
 		ExperimentalIncubator<Integer> manager = new ExperimentalIncubator<Integer>(
 				integerEvaluator);
-		manager.addGenerator(randomGenerator);
+		manager.addExplorator(randomExplorator);
 
-		assertEquals(0, manager.getPopulationManager().getPopulation().size());
+		assertEquals(0, manager.getPopulation().size());
 		manager.incubate();
-		assertEquals(1, manager.getPopulationManager().getPopulation().size());
+		assertEquals(1, manager.getPopulation().size());
 		manager.incubate();
-		assertEquals(2, manager.getPopulationManager().getPopulation().size());
+		assertEquals(2, manager.getPopulation().size());
 		manager.incubate();
-		assertEquals(3, manager.getPopulationManager().getPopulation().size());
+		assertEquals(3, manager.getPopulation().size());
 	}
 
 	@Test
 	public void testPopulationWithModulo() {
 		ExperimentalIncubator<Integer> manager = new ExperimentalIncubator<Integer>(
 				integerEvaluator);
-		manager.addGenerator(mutatorModulo);
+		manager.addMutator(mutatorModulo);
 
-		manager.getPopulationManager().push(9);
-		assertEquals(1, manager.getPopulationManager().getPopulation().size());
-		assertEquals(9, (int) manager.getPopulationManager().getBest().next());
+		manager.push(9);
+		assertEquals(1, manager.getPopulation().size());
+		assertEquals(9, (int) manager.getBest().next());
 		manager.incubate();
-		assertEquals(1, manager.getPopulationManager().getPopulation().size());
-		assertEquals(8, (int) manager.getPopulationManager().getBest().next());
+		assertEquals(1, manager.getPopulation().size());
+		assertEquals(8, (int) manager.getBest().next());
 		manager.incubate();
-		assertEquals(1, manager.getPopulationManager().getPopulation().size());
-		assertEquals(6, (int) manager.getPopulationManager().getBest().next());
+		assertEquals(1, manager.getPopulation().size());
+		assertEquals(6, (int) manager.getBest().next());
 		manager.incubate();
-		assertEquals(1, manager.getPopulationManager().getPopulation().size());
-		assertEquals(2, (int) manager.getPopulationManager().getBest().next());
+		assertEquals(1, manager.getPopulation().size());
+		assertEquals(2, (int) manager.getBest().next());
 		manager.incubate();
-		assertEquals(1, manager.getPopulationManager().getPopulation().size());
-		assertEquals(2, (int) manager.getPopulationManager().getBest().next());
+		assertEquals(1, manager.getPopulation().size());
+		assertEquals(2, (int) manager.getBest().next());
 	}
 
 	@Ignore
 	@Test
 	public void testPopulationWithRandomAndModulo() {
-		ExperimentalIncubator<Integer> manager = new ExperimentalIncubator<Integer>(
+		ExperimentalIncubator<Integer> incubator = new ExperimentalIncubator<Integer>(
 				integerEvaluator);
-		manager.addGenerator(randomGenerator);
-		manager.addGenerator(mutatorModulo);
+		incubator.addExplorator(randomExplorator);
+		incubator.addMutator(mutatorModulo);
 
-		@SuppressWarnings("unchecked")
-		CompetitionManager<?, Integer> populationManager = (CompetitionManager<?, Integer>) manager
-				.getPopulationManager();
-		assertEquals(0, populationManager.size());
-		manager.incubate(); // random 6
-		assertEquals(1, populationManager.size());
-		assertEquals(6, (int) populationManager.getBest().next());
+		assertEquals(0, incubator.getPopulation().size());
+		incubator.incubate(); // random 6
+		assertEquals(1, incubator.getPopulation().size());
+		assertEquals(6, (int) incubator.getBest().next());
 
 		for (int i = 0; i < 101; i++) {
 			System.err.println("Round A" + i);
-			manager.incubate(); // mutate 6
+			incubator.incubate(); // mutate 6
 			System.err.println("Check A" + i);
-			assertEquals(1, populationManager.size());
-			assertEquals(2, (int) populationManager.getBest().next());
+			assertEquals(1, incubator.getPopulation().size());
+			assertEquals(2, (int) incubator.getBest().next());
 		}
 
 		{
-			manager.incubate(); // random 1
-			assertEquals(2, populationManager.size());
-			Iterator<Integer> best = populationManager.getBest();
+			incubator.incubate(); // random 1
+			assertEquals(2, incubator.getPopulation().size());
+			Iterator<Integer> best = incubator.getBest();
 			assertEquals(1, (int) best.next());
 			assertEquals(2, (int) best.next());
 		}
 
 		for (int i = 0; i < 100; i++) {
 			System.err.println("Round B" + i);
-			manager.incubate(); // mutate 1, 2 looses
+			incubator.incubate(); // mutate 1, 2 looses
 			System.err.println("Check B" + i);
-			assertEquals(1, populationManager.size());
-			assertEquals(1, (int) populationManager.getBest().next());
+			assertEquals(1, incubator.getPopulation().size());
+			assertEquals(1, (int) incubator.getBest().next());
 		}
 
 		{
-			manager.incubate(); // random 4
-			assertEquals(2, populationManager.size());
-			Iterator<Integer> best = populationManager.getBest();
+			incubator.incubate(); // random 4
+			assertEquals(2, incubator.getPopulation().size());
+			Iterator<Integer> best = incubator.getBest();
 			assertEquals(1, (int) best.next());
 			assertEquals(4, (int) best.next());
 		}
 
 		for (int i = 0; i < 102; i++) {
 			System.err.println("Round C" + i);
-			manager.incubate(); // mutate 4
+			incubator.incubate(); // mutate 4
 			System.err.println("Check C" + i);
-			assertEquals(2, populationManager.size());
-			assertEquals(1, (int) populationManager.getBest().next());
+			assertEquals(2, incubator.getPopulation().size());
+			assertEquals(1, (int) incubator.getBest().next());
 		}
 
 		{
-			manager.incubate(); // random 2
-			assertEquals(3, populationManager.size());
-			Iterator<Integer> best = populationManager.getBest();
+			incubator.incubate(); // random 2
+			assertEquals(3, incubator.getPopulation().size());
+			Iterator<Integer> best = incubator.getBest();
 			assertEquals(1, (int) best.next());
 			assertEquals(2, (int) best.next());
 			assertEquals(4, (int) best.next());
@@ -428,16 +393,16 @@ public class ExperimentalIncubatorTest {
 
 		for (int i = 0; i < 101; i++) {
 			System.err.println("Round D" + i);
-			manager.incubate(); // mutate 2, 4 looses
+			incubator.incubate(); // mutate 2, 4 looses
 			System.err.println("Check D" + i);
-			assertEquals(2, populationManager.size());
-			assertEquals(1, (int) populationManager.getBest().next());
+			assertEquals(2, incubator.getPopulation().size());
+			assertEquals(1, (int) incubator.getBest().next());
 		}
 
 		{
-			manager.incubate(); // random 4
-			assertEquals(3, populationManager.size());
-			Iterator<Integer> best = populationManager.getBest();
+			incubator.incubate(); // random 4
+			assertEquals(3, incubator.getPopulation().size());
+			Iterator<Integer> best = incubator.getBest();
 			assertEquals(1, (int) best.next());
 			assertEquals(2, (int) best.next());
 			assertEquals(4, (int) best.next());
@@ -445,50 +410,50 @@ public class ExperimentalIncubatorTest {
 
 		for (int i = 0; i < 101; i++) {
 			System.err.println("Round E" + i);
-			manager.incubate(); // mutate 4
+			incubator.incubate(); // mutate 4
 			System.err.println("Check E" + i);
-			assertEquals(3, populationManager.size());
-			assertEquals(1, (int) populationManager.getBest().next());
+			assertEquals(3, incubator.getPopulation().size());
+			assertEquals(1, (int) incubator.getBest().next());
 		}
 
-		while (populationManager.size() == 3) {
+		while (incubator.getPopulation().size() == 3) {
 			System.err.println("Round align");
-			manager.incubate(); // mutate all
+			incubator.incubate(); // mutate all
 			System.err.println("Check align");
-			assertEquals(1, (int) populationManager.getBest().next());
+			assertEquals(1, (int) incubator.getBest().next());
 		}
-		assertEquals(2, populationManager.size());
+		assertEquals(2, incubator.getPopulation().size());
 
 		{
-			manager.incubate(); // random 5
-			assertEquals(3, populationManager.size());
-			Iterator<Integer> best = populationManager.getBest();
+			incubator.incubate(); // random 5
+			assertEquals(3, incubator.getPopulation().size());
+			Iterator<Integer> best = incubator.getBest();
 			assertEquals(1, (int) best.next());
 			best.next();
 			assertEquals(5, (int) best.next());
 		}
 
 		{
-			manager.incubate(); // mutate 5, replaced by 0
-			assertEquals(3, populationManager.size());
-			Iterator<Integer> best = populationManager.getBest();
+			incubator.incubate(); // mutate 5, replaced by 0
+			assertEquals(3, incubator.getPopulation().size());
+			Iterator<Integer> best = incubator.getBest();
 			assertEquals(0, (int) best.next());
 			assertEquals(1, (int) best.next());
 		}
 
 		for (int i = 0; i < 100; i++) {
 			System.err.println("Round G" + i);
-			manager.incubate(); // mutate 0
+			incubator.incubate(); // mutate 0
 			System.err.println("Check G" + i);
-			assertEquals(3, populationManager.size());
-			assertEquals(0, (int) populationManager.getBest().next());
+			assertEquals(3, incubator.getPopulation().size());
+			assertEquals(0, (int) incubator.getBest().next());
 		}
 
 		for (int i = 0; i < 1000; i++) {
 			System.err.println("Round H" + i);
-			manager.incubate();
+			incubator.incubate();
 			System.err.println("Check H" + i);
-			assertEquals(0, (int) populationManager.getBest().next());
+			assertEquals(0, (int) incubator.getBest().next());
 		}
 	}
 

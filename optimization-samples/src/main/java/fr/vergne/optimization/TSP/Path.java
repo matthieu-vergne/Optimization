@@ -15,7 +15,7 @@ public class Path implements Comparable<Path> {
 	@Override
 	public int compareTo(Path i) {
 		Path p = (Path) i;
-		return -getLength().compareTo(p.getLength());
+		return getLength().compareTo(p.getLength());
 	}
 
 	@Override

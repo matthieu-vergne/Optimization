@@ -2,15 +2,12 @@ package fr.vergne.optimization.incubator;
 
 import java.util.Collection;
 
-import fr.vergne.optimization.generator.Generator;
-import fr.vergne.optimization.population.PopulationManager;
-
 /**
- * An {@link Incubator} aims at evolving a population of {@link Individual}s.
- * {@link #getGenerators()} provides the {@link Generator}s which will create
- * new {@link Individual}s while {@link #getPopulationManager()} provides the
- * {@link PopulationManager} which decides how the individuals are
- * kept during the incubation process.
+ * An {@link Incubator} aims at evolving a population of {@link Individual}s. A
+ * single execution of the {@link #incubate()} method correspond to a single
+ * round of evolution of the population. Depending on the {@link Incubator},
+ * especially when probabilistic processes are involved, the population can be
+ * exactly in the same state after a single round.
  * 
  * @author Matthieu Vergne <vergne@fbk.eu>
  * 
@@ -20,20 +17,13 @@ public interface Incubator<Individual> {
 
 	/**
 	 * 
-	 * @return the {@link PopulationManager} in which the {@link Individual}s
-	 *         are stored
+	 * @return the current population of {@link Individual}s
 	 */
-	public PopulationManager<Individual> getPopulationManager();
+	public Collection<Individual> getPopulation();
 
 	/**
-	 * 
-	 * @return the {@link Generator}s used to generate new {@link Individual}s
-	 */
-	public Collection<Generator<Individual>> getGenerators();
-
-	/**
-	 * The incubation process, aiming at creating new {@link Individual}s to
-	 * make the population evolve.
+	 * The incubation process, aiming at making the population evolve by
+	 * inserting or removing {@link Individual}s (or both).
 	 */
 	public void incubate();
 }

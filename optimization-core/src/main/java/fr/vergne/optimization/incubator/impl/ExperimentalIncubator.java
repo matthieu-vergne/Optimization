@@ -1,9 +1,6 @@
 package fr.vergne.optimization.incubator.impl;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -11,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,119 +16,125 @@ import fr.vergne.optimization.generator.Generator;
 import fr.vergne.optimization.generator.Mutator;
 import fr.vergne.optimization.incubator.Incubator;
 import fr.vergne.optimization.population.Evaluator;
-import fr.vergne.optimization.population.PopulationManager;
-import fr.vergne.optimization.population.impl.CompetitionManager;
-import fr.vergne.optimization.population.impl.CompetitionManager.Competition;
-import fr.vergne.optimization.population.impl.CompetitionManager.ScoreDescriptor;
 
-//TODO replace individuals by "pools" (individual + history-based properties)
 //FIXME document
 public class ExperimentalIncubator<Individual> implements Incubator<Individual> {
 
-	private final CompetitionManager<Generator<Individual>, Individual> manager;
-	private final Collection<Generator<Individual>> generators = new LinkedList<Generator<Individual>>();
+	private final TrackerPool trackerPool = new TrackerPool();
+	private final Collection<Mutator<Individual>> mutators = new LinkedList<Mutator<Individual>>();
+	private final Collection<Explorator<Individual>> explorators = new LinkedList<Explorator<Individual>>();
+	private final Competition<Individual> competition;
 	private final Random rand = new Random();
 	private final Logger logger = Logger.getAnonymousLogger();
+	private boolean hasEvolved;
 
 	public <Value extends Comparable<Value>> ExperimentalIncubator(
 			final Evaluator<Individual, Value> evaluator) {
 		logger.setLevel(Level.ALL);
-		this.manager = new CompetitionManager<Generator<Individual>, Individual>(
-				new Competition<Individual>() {
+		this.competition = new Competition<Individual>() {
 
-					@Override
-					public Collection<Individual> compete(
-							Collection<Individual> competitors) {
-						List<Individual> winners = new LinkedList<Individual>();
-						Value bestValue = null;
-						for (Individual competitor : competitors) {
-							Value newValue = evaluator.evaluate(competitor);
-							if (bestValue == null
-									|| newValue.compareTo(bestValue) < 0) {
-								winners.clear();
-								bestValue = newValue;
-								winners.add(competitor);
-							} else if (newValue.compareTo(bestValue) == 0) {
-								winners.add(competitor);
-							} else {
-								// loser, don't store it
-							}
-						}
-						return winners;
-					}
-				});
+			@Override
+			public Individual compete(Individual competitor1,
+					Individual competitor2) {
+				Value value1 = evaluator.evaluate(competitor1);
+				Value value2 = evaluator.evaluate(competitor2);
+				if (value1.compareTo(value2) < 0) {
+					return competitor1;
+				} else if (value1.compareTo(value2) > 0) {
+					return competitor2;
+				} else if (value1.compareTo(value2) == 0) {
+					/*
+					 * TODO Avoid convergence hiding: if competitors have the
+					 * exactly same value, we can spend time switching between
+					 * each other in a sequence of competitions. In the case
+					 * where better solutions are in their neighboring, it
+					 * allows to visit different parts of the space and the
+					 * tracker can eventually exit such attractor, thus it
+					 * should not be avoided. But in the case where all
+					 * competitors are potential optima, switching between each
+					 * other makes the tracker running indefinitely without
+					 * "seeing" any optimum. This can be rare, but in such a
+					 * case the tracker never provide any convergence although
+					 * it should do so.
+					 */
+					return rand.nextBoolean() ? competitor1 : competitor2;
+				} else {
+					throw new IllegalStateException(
+							"This case should not happen.");
+				}
+			}
+		};
 	}
 
 	@Override
-	public PopulationManager<Individual> getPopulationManager() {
-		return manager;
+	public Collection<Individual> getPopulation() {
+		Collection<Individual> population = new LinkedList<Individual>();
+		for (Tracker tracker : trackerPool) {
+			population.add(tracker.getRepresentative());
+		}
+		return population;
 	}
 
-	public void addGenerator(Generator<Individual> generator) {
-		generators.add(generator);
+	public void push(Individual individual) {
+		trackerPool.trackers.add(new Tracker(individual));
 	}
 
-	public void removeGenerator(Generator<Individual> generator) {
-		generators.remove(generator);
+	public void addMutator(Mutator<Individual> mutator) {
+		mutators.add(mutator);
 	}
 
-	@Override
-	public Collection<Generator<Individual>> getGenerators() {
-		return generators;
+	public void removeMutator(Mutator<Individual> mutator) {
+		mutators.remove(mutator);
+	}
+
+	public Collection<Mutator<Individual>> getMutators() {
+		return mutators;
+	}
+
+	public void addExplorator(Explorator<Individual> explorator) {
+		explorators.add(explorator);
+	}
+
+	public void removeExplorator(Explorator<Individual> explorator) {
+		explorators.remove(explorator);
+	}
+
+	public Collection<Explorator<Individual>> getExplorators() {
+		return explorators;
+	}
+
+	public boolean hasEvolved() {
+		return hasEvolved;
 	}
 
 	@Override
 	public void incubate() {
 		logger.info("INCUBATION START!");
 		logger.info("Searching generator...");
+		hasEvolved = false;
 		Iterator<Wrapper> iterator = generateGenerators();
 		TreeMap<Double, Wrapper> lottery = new TreeMap<Double, Wrapper>();
-		double max = 0;
+		double total = 0;
 		while (iterator.hasNext()) {
 			Wrapper generator = iterator.next();
 			double interest = generator.evaluateInterest();
-			max += interest;
-			lottery.put(max, generator);
-			logger.fine("+" + generator + " (" + interest + "/" + max + ")");
+			if (interest > 0) {
+				total += interest;
+				lottery.put(total, generator);
+				logger.fine("+ " + generator + " total=" + total);
+			} else {
+				logger.fine("X " + generator);
+			}
 		}
 
 		if (lottery.isEmpty()) {
 			logger.info("No applicable generator.");
 		} else {
 			final Wrapper wrapper = lottery.ceilingEntry(
-					rand.nextDouble() * max).getValue();
+					rand.nextDouble() * total).getValue();
 			logger.info("Final generator: " + wrapper);
-			manager.setCompetitors(wrapper.getCompetitors());
-			manager.setCurrentTournament(wrapper.getGenerator());
-			Individual individual = wrapper.generates();
-			Collection<Individual> competitors = new LinkedList<Individual>(
-					wrapper.getCompetitors());
-			competitors.add(individual);
-			manager.push(individual);
-			Collection<Individual> losers = new LinkedList<Individual>(
-					competitors);
-			losers.removeAll(manager.getPopulation());
-			logger.info("Competition: " + competitors + " => loosers: "
-					+ losers);
-			if (competitors.size() > 1 && losers.isEmpty()) {
-				logger.info("Remove least scored to avoid population explosion.");
-				TreeSet<Individual> set = new TreeSet<Individual>(
-						new Comparator<Individual>() {
-							@Override
-							public int compare(Individual i1, Individual i2) {
-								Generator<Individual> generator = wrapper
-										.getGenerator();
-								return manager
-										.getScore(generator, i1)
-										.compareTo(
-												manager.getScore(generator, i2));
-							}
-						});
-				set.addAll(competitors);
-				manager.getPopulation().remove(set.first());
-			} else {
-				// normal behavior
-			}
+			wrapper.execute();
+			hasEvolved = true;
 		}
 		logger.info("INCUBATION DONE!");
 	}
@@ -140,10 +142,12 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 	private Iterator<Wrapper> generateGenerators() {
 		return new Iterator<Wrapper>() {
 
-			private final Iterator<Generator<Individual>> a = generators
+			private final Iterator<Mutator<Individual>> mutatorIterator = mutators
 					.iterator();
+			private final Iterator<Explorator<Individual>> exploratorIterator = explorators
+					.iterator();
+			private Iterator<Tracker> trackerIterator = null;
 			private Mutator<Individual> temporaryMutator = null;
-			private Iterator<Individual> b = null;
 			private Wrapper next = null;
 
 			@Override
@@ -162,36 +166,26 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 
 			private void findNext() {
 				while (next == null) {
-					if (b != null && b.hasNext()) {
-						next = new MutatorWrapper(temporaryMutator, b.next());
-					} else if (a.hasNext()) {
-						Generator<Individual> generator = a.next();
-						if (generator instanceof Mutator) {
-							if (manager.getPopulation().isEmpty()) {
-								continue;
-							} else {
-								temporaryMutator = (Mutator<Individual>) generator;
-								b = manager.getPopulation().iterator();
-								Individual individual = b.next();
-								if (temporaryMutator.isApplicableOn(individual)) {
-									next = new MutatorWrapper(temporaryMutator,
-											individual);
-								} else {
-									continue;
-								}
-							}
-						} else if (generator instanceof Explorator) {
-							Explorator<Individual> explorator = (Explorator<Individual>) generator;
-							Collection<Individual> population = manager
-									.getPopulation();
-							if (explorator.isApplicableOn(population)) {
-								next = new ExploratorWrapper(explorator,
-										population);
-							} else {
-								continue;
-							}
+					if (trackerIterator != null && trackerIterator.hasNext()) {
+						Tracker tracker = trackerIterator.next();
+						if (temporaryMutator.isApplicableOn(tracker
+								.getRepresentative())) {
+							next = new MutatorWrapper(temporaryMutator, tracker);
 						} else {
-							next = new GeneratorWrapper(generator);
+							continue;
+						}
+					} else if (mutatorIterator.hasNext()) {
+						temporaryMutator = mutatorIterator.next();
+						trackerIterator = trackerPool.iterator();
+						continue;
+					} else if (exploratorIterator.hasNext()) {
+						Explorator<Individual> explorator = exploratorIterator
+								.next();
+						Collection<Individual> population = getPopulation();
+						if (explorator.isApplicableOn(population)) {
+							next = new ExploratorWrapper(explorator, population);
+						} else {
+							continue;
 						}
 					} else {
 						// empty population
@@ -207,11 +201,7 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 		};
 	}
 
-	private abstract class Wrapper implements Generator<Individual> {
-		protected abstract double computeInterest();
-
-		public abstract Generator<Individual> getGenerator();
-
+	private abstract class Wrapper {
 		private Double interest = null;
 
 		public double evaluateInterest() {
@@ -219,34 +209,31 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 			return interest;
 		}
 
-		public abstract Collection<Individual> getCompetitors();
+		protected abstract double computeInterest();
+
+		public abstract void execute();
+
+		public abstract Generator<?, Individual> getGenerator();
 	}
 
 	private class MutatorWrapper extends Wrapper {
 
 		private final Mutator<Individual> mutator;
-		private final Individual individual;
+		private final Tracker tracker;
 
-		public MutatorWrapper(Mutator<Individual> mutator, Individual individual) {
+		public MutatorWrapper(Mutator<Individual> mutator, Tracker tracker) {
 			this.mutator = mutator;
-			this.individual = individual;
+			this.tracker = tracker;
 		}
 
 		@Override
-		public Generator<Individual> getGenerator() {
+		public void execute() {
+			tracker.compete(mutator);
+		}
+
+		@Override
+		public Generator<?, Individual> getGenerator() {
 			return mutator;
-		}
-
-		@Override
-		public Individual generates() {
-			mutator.setReference(individual);
-			return mutator.generates();
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		public Collection<Individual> getCompetitors() {
-			return Arrays.asList(individual);
 		}
 
 		@Override
@@ -254,17 +241,15 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 			// FIXME consider average time to improve (window)
 			// TODO consider mutator-dependent neighboring size
 			// TODO formalize computation
-			int score = manager.getScore(mutator, individual);
-			int max = manager.getMaxScoreGlobal(mutator);
-			int ref = max + 1;
-			double interest = ((double) ref - score) / ref;
-			logger.fine("Mutation: S=" + score + "/" + max + " => " + interest);
+			double optimality = tracker.getOptimalityWith(mutator);
+			double interest = 1 - optimality;
+			logger.fine("Mutation: O=" + optimality + " => " + interest);
 			return interest;
 		}
 
 		@Override
 		public String toString() {
-			return "Mutator[" + mutator + ", " + individual + "] ("
+			return "Mutator[" + mutator + ", " + tracker + "] ("
 					+ evaluateInterest() + ")";
 		}
 	}
@@ -281,19 +266,13 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 		}
 
 		@Override
-		public Generator<Individual> getGenerator() {
+		public void execute() {
+			trackerPool.track(explorator, population);
+		}
+
+		@Override
+		public Generator<?, Individual> getGenerator() {
 			return explorator;
-		}
-
-		@Override
-		public Individual generates() {
-			explorator.setReference(population);
-			return use(explorator);
-		}
-
-		@Override
-		public Collection<Individual> getCompetitors() {
-			return Collections.emptyList();
 		}
 
 		@Override
@@ -301,23 +280,14 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 			// FIXME use improvement history (pools)
 			// TODO use tournament neighboring size to weight
 			// TODO formalize computation
-			Iterator<ScoreDescriptor<Generator<Individual>>> descriptors = manager
-					.getScoreDescriptors();
 			double interest = 1;
-			while (descriptors.hasNext()) {
-				ScoreDescriptor<Generator<Individual>> descriptor = descriptors
-						.next();
-				interest *= descriptor.getRatio();
-				logger.finer("T=" + descriptor.getTournament() + ", S="
-						+ descriptor.getMin() + "/" + descriptor.getMax()
-						+ " => " + descriptor.getRatio());
+			for (Mutator<Individual> mutator : mutators) {
+				for (Tracker tracker : trackerPool) {
+					double optimality = tracker.getOptimalityWith(mutator);
+					interest = Math.min(interest, optimality);
+				}
 			}
-			double size = manager.size();
-			double uses = getUses(explorator);
-			System.out.println("Explorator: S=" + "?" + ", E=" + uses + ", P="
-					+ size + " => " + interest);
-			logger.fine("Explorator: S=" + "?" + ", E=" + uses + ", P=" + size
-					+ " => " + interest);
+			logger.fine("Explorator => " + interest);
 			return interest;
 		}
 
@@ -328,54 +298,136 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 		}
 	}
 
-	private class GeneratorWrapper extends Wrapper {
-
-		private final Generator<Individual> generator;
-
-		public GeneratorWrapper(Generator<Individual> generator) {
-			this.generator = generator;
-		}
+	private class TrackerPool implements Iterable<Tracker> {
+		private final Collection<Tracker> trackers = new LinkedList<Tracker>();
 
 		@Override
-		public Generator<Individual> getGenerator() {
-			return generator;
+		public Iterator<Tracker> iterator() {
+			return trackers.iterator();
 		}
 
-		@Override
-		public Individual generates() {
-			return use(generator);
+		public <Input> void track(Generator<Input, Individual> starter,
+				Input input) {
+			trackers.add(new Tracker(starter, input));
+		}
+	}
+
+	private class Tracker {
+		private final Map<Mutator<Individual>, Individual> neighborReferences = new HashMap<Mutator<Individual>, Individual>();
+		private final Map<Mutator<Individual>, Integer> neighborLoops = new HashMap<Mutator<Individual>, Integer>();
+		private Individual representative;
+
+		public <Input> Tracker(Generator<Input, Individual> starter, Input input) {
+			representative = starter.generates(input);
 		}
 
-		@Override
-		public Collection<Individual> getCompetitors() {
-			return Collections.emptyList();
+		public Tracker(Individual individual) {
+			representative = individual;
 		}
 
-		@Override
-		protected double computeInterest() {
-			// TODO formalize computation
-			int size = manager.size();
-			int uses = getUses(generator);
-			double interest = Math.exp(-uses * size);
-			logger.fine("Generation: G=" + uses + ", P=" + size + " => "
-					+ interest);
-			return interest;
+		public double getOptimalityWith(Mutator<Individual> mutator) {
+			Integer loops = neighborLoops.get(mutator);
+			if (loops == null || loops == 0) {
+				return 0;
+			} else {
+				// double victories = getVictoriesAgainst(mutator);
+				// double cycleLength = victories / loops;
+				// double exp = Math.exp(loops);
+				// double p = exp / (1 + exp);
+				// double o = p * 2 - 1;
+				// logger.finest("V/L=" + victories + "/" + loops + "="
+				// + cycleLength + ", EXP=" + exp + ", P=" + p + ", O="
+				// + o);
+				return 1 - 1.0 / (loops + 1);
+			}
+		}
+
+		public <Input> void compete(Mutator<Individual> mutator) {
+			Individual challenger = mutator.generates(representative);
+			Individual winner = competition.compete(representative, challenger);
+			logger.info("Competition: " + representative + " VS " + challenger
+					+ " => winner: " + winner);
+			if (winner.equals(representative)) {
+				Individual reference = neighborReferences.get(mutator);
+				if (reference == null) {
+					neighborReferences.put(mutator, challenger);
+					neighborLoops.put(mutator, 0);
+				} else if (reference.equals(challenger)) {
+					// TODO consider several references for robustness
+					neighborLoops.put(mutator, neighborLoops.get(mutator) + 1);
+				} else {
+					// not a reference neighbor to consider
+				}
+			} else {
+				representative = winner;
+				neighborReferences.clear();
+				neighborLoops.clear();
+			}
+
+		}
+
+		public Individual getRepresentative() {
+			return representative;
 		}
 
 		@Override
 		public String toString() {
-			return "Generator[" + generator + "] (" + evaluateInterest() + ")";
+			String sep = ", ";
+			String opt = "";
+			for (Mutator<Individual> mutator : mutators) {
+				opt += sep + mutator + "=" + getOptimalityWith(mutator);
+			}
+			return representative + " (" + opt.substring(sep.length()) + ")";
 		}
 	}
 
-	private final Map<Generator<Individual>, Integer> uses = new HashMap<Generator<Individual>, Integer>();
-
-	private Individual use(Generator<Individual> generator) {
-		uses.put(generator, getUses(generator) + 1);
-		return generator.generates();
+	/**
+	 * A {@link Competition} aims at selecting a winner among two
+	 * {@link Competitor}s. This is a strict {@link Competition}, in the sense
+	 * that exactly one of the two {@link Competitor}s should be selected.
+	 * 
+	 * @author Matthieu Vergne <matthieu.vergne@gmail.com>
+	 * 
+	 * @param <Competitor>
+	 */
+	private interface Competition<Competitor> {
+		/**
+		 * 
+		 * @param competitor1
+		 *            a first {@link Competitor}
+		 * @param competitor2
+		 *            a second {@link Competitor}
+		 * @return the winner of the {@link Competition}
+		 */
+		public Competitor compete(Competitor competitor1, Competitor competitor2);
 	}
 
-	private int getUses(Generator<Individual> generator) {
-		return uses.containsKey(generator) ? uses.get(generator) : 0;
+	public Iterator<Individual> getBest() {
+		return new Iterator<Individual>() {
+
+			private final List<Individual> remaining = new LinkedList<Individual>(
+					getPopulation());
+
+			@Override
+			public boolean hasNext() {
+				return !remaining.isEmpty();
+			}
+
+			@Override
+			public Individual next() {
+				Iterator<Individual> iterator = remaining.iterator();
+				Individual best = iterator.next();
+				while (iterator.hasNext()) {
+					best = competition.compete(best, iterator.next());
+				}
+				remaining.remove(best);
+				return best;
+			}
+
+			@Override
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
+		};
 	}
 }

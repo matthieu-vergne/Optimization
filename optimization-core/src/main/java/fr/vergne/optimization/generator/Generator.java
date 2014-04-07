@@ -1,23 +1,31 @@
 package fr.vergne.optimization.generator;
 
 /**
- * A {@link Generator} aims at generating new {@link Individual}s. As it is the
- * only assumption, a class implementing directly this interface as no specific
- * use out of generating new {@link Individual}s. For instance, a random
- * generation could be implemented directly with this interface. In other cases,
- * more specialized interfaces such as {@link Mutator} or {@link Explorator}
- * should be used.
+ * A {@link Generator} aims at generating new {@link Individual}s based on some
+ * {@link Configuration}s.
  * 
  * @author Matthieu Vergne <vergne@fbk.eu>
  * 
+ * @param <Configuration>
  * @param <Individual>
  */
-public interface Generator<Individual> {
+public interface Generator<Configuration, Individual> {
 
 	/**
 	 * 
-	 * @return a new {@link Individual}
+	 * @param configuration
+	 *            the {@link Configuration} to check
+	 * @return <code>true</code> if the {@link Configuration} provided can be
+	 *         used, <code>false</code> otherwise
 	 */
-	public Individual generates();
+	public boolean isApplicableOn(Configuration configuration);
+
+	/**
+	 * 
+	 * @param configuration
+	 *            the {@link Configuration} to generate an {@link Individual}
+	 * @return the generated {@link Individual}
+	 */
+	public Individual generates(Configuration configuration);
 
 }
