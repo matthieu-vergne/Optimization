@@ -109,7 +109,7 @@ public class TrackerPool<Individual> implements Iterable<Tracker<Individual>>,
 				// logger.finest("V/L=" + victories + "/" + loops + "="
 				// + cycleLength + ", EXP=" + exp + ", P=" + p + ", O="
 				// + o);
-				return loops / (loops + 1);
+				return (double) loops / (loops + 1);
 			}
 		}
 
