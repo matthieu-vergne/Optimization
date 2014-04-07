@@ -338,7 +338,7 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 				// logger.finest("V/L=" + victories + "/" + loops + "="
 				// + cycleLength + ", EXP=" + exp + ", P=" + p + ", O="
 				// + o);
-				return 1 - 1.0 / (loops + 1);
+				return loops / (loops + 1);
 			}
 		}
 
