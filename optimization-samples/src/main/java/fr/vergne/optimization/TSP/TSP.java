@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 
 import fr.vergne.optimization.generator.Explorator;
 import fr.vergne.optimization.generator.Mutator;
-import fr.vergne.optimization.population.impl.TrackerPool.Tracker;
+import fr.vergne.optimization.population.impl.OptimizerPool.Optimizer;
 
 public class TSP {
 	private static long startTime;
@@ -191,7 +191,7 @@ public class TSP {
 	static long lastDisplay = 0;
 
 	private static void displayResult(PathIncubator incubator, JCanvas canvas) {
-		Path best = incubator.getTrackerPool().getBest().next();
+		Path best = incubator.getOptimizerPool().getBest().next();
 		if (best.getLength() < canvas.getPath().getLength()
 				|| System.currentTimeMillis() > lastDisplay + 1000) {
 			lastDisplay = System.currentTimeMillis();
@@ -200,13 +200,15 @@ public class TSP {
 			String terminal = String.format("%8.3fs| %8d| %5d -", time,
 					incubator.getGeneratedIndividuals(), incubator
 							.getPopulation().size());
-			for (Tracker<Path> tracker : incubator.getTrackerPool()) {
-				Path path = tracker.getRepresentative();
+			for (Optimizer<Path> optimizer : incubator.getOptimizerPool()) {
+				Path path = optimizer.getRepresentative();
 				double length = (double) Math.round(path.getLength() * 100) / 100;
-				String desc = "" + length;
+				String desc = "" + length + " |";
 				for (Mutator<Path> mutator : incubator.getMutators()) {
-					desc += " (" + mutator + "="
-							+ tracker.getOptimalityWith(mutator) + ")";
+					double optimality = (double) Math.round(optimizer
+							.getOptimalityWith(mutator) * 100) / 100;
+					String initial = mutator.toString().substring(0, 1);
+					desc += initial + "=" + optimality + "|";
 				}
 				terminal += " " + (path == best ? "[" + desc + "]" : desc);
 			}

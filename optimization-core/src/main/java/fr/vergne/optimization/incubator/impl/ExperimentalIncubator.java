@@ -13,14 +13,14 @@ import fr.vergne.optimization.generator.Generator;
 import fr.vergne.optimization.generator.Mutator;
 import fr.vergne.optimization.incubator.Incubator;
 import fr.vergne.optimization.population.Evaluator;
-import fr.vergne.optimization.population.impl.TrackerPool;
-import fr.vergne.optimization.population.impl.TrackerPool.Competition;
-import fr.vergne.optimization.population.impl.TrackerPool.Tracker;
+import fr.vergne.optimization.population.impl.OptimizerPool;
+import fr.vergne.optimization.population.impl.OptimizerPool.Competition;
+import fr.vergne.optimization.population.impl.OptimizerPool.Optimizer;
 
 //FIXME document
 public class ExperimentalIncubator<Individual> implements Incubator<Individual> {
 
-	private final TrackerPool<Individual> trackerPool;
+	private final OptimizerPool<Individual> optimizerPool;
 	private final Collection<Mutator<Individual>> mutators = new LinkedList<Mutator<Individual>>();
 	private final Collection<Explorator<Individual>> explorators = new LinkedList<Explorator<Individual>>();
 	private final Competition<Individual> competition;
@@ -49,12 +49,12 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 					 * each other in a sequence of competitions. In the case
 					 * where better solutions are in their neighboring, it
 					 * allows to visit different parts of the space and the
-					 * tracker can eventually exit such attractor, thus it
+					 * optimizer can eventually exit such attractor, thus it
 					 * should not be avoided. But in the case where all
 					 * competitors are potential optima, switching between each
-					 * other makes the tracker running indefinitely without
+					 * other makes the optimizer running indefinitely without
 					 * "seeing" any optimum. This can be rare, but in such a
-					 * case the tracker never provide any convergence although
+					 * case the optimizer never provide any convergence although
 					 * it should do so.
 					 */
 					return rand.nextBoolean() ? competitor1 : competitor2;
@@ -64,20 +64,20 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 				}
 			}
 		};
-		this.trackerPool = new TrackerPool<Individual>(competition);
+		this.optimizerPool = new OptimizerPool<Individual>(competition);
 	}
 
 	@Override
 	public Collection<Individual> getPopulation() {
-		return trackerPool.getPopulation();
+		return optimizerPool.getPopulation();
 	}
 
-	public TrackerPool<Individual> getTrackerPool() {
-		return trackerPool;
+	public OptimizerPool<Individual> getOptimizerPool() {
+		return optimizerPool;
 	}
 
 	public void push(Individual individual) {
-		trackerPool.push(individual);
+		optimizerPool.push(individual);
 	}
 
 	public void addMutator(Mutator<Individual> mutator) {
@@ -147,7 +147,7 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 					.iterator();
 			private final Iterator<Explorator<Individual>> exploratorIterator = explorators
 					.iterator();
-			private Iterator<Tracker<Individual>> trackerIterator = null;
+			private Iterator<Optimizer<Individual>> optimizerIterator = null;
 			private Mutator<Individual> temporaryMutator = null;
 			private Wrapper next = null;
 
@@ -167,17 +167,20 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 
 			private void findNext() {
 				while (next == null) {
-					if (trackerIterator != null && trackerIterator.hasNext()) {
-						Tracker<Individual> tracker = trackerIterator.next();
-						if (temporaryMutator.isApplicableOn(tracker
+					if (optimizerIterator != null
+							&& optimizerIterator.hasNext()) {
+						Optimizer<Individual> optimizer = optimizerIterator
+								.next();
+						if (temporaryMutator.isApplicableOn(optimizer
 								.getRepresentative())) {
-							next = new MutatorWrapper(temporaryMutator, tracker);
+							next = new MutatorWrapper(temporaryMutator,
+									optimizer);
 						} else {
 							continue;
 						}
 					} else if (mutatorIterator.hasNext()) {
 						temporaryMutator = mutatorIterator.next();
-						trackerIterator = trackerPool.iterator();
+						optimizerIterator = optimizerPool.iterator();
 						continue;
 					} else if (exploratorIterator.hasNext()) {
 						Explorator<Individual> explorator = exploratorIterator
@@ -220,17 +223,17 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 	private class MutatorWrapper extends Wrapper {
 
 		private final Mutator<Individual> mutator;
-		private final Tracker<Individual> tracker;
+		private final Optimizer<Individual> optimizer;
 
 		public MutatorWrapper(Mutator<Individual> mutator,
-				Tracker<Individual> tracker) {
+				Optimizer<Individual> optimizer) {
 			this.mutator = mutator;
-			this.tracker = tracker;
+			this.optimizer = optimizer;
 		}
 
 		@Override
 		public void execute() {
-			tracker.compete(mutator);
+			optimizer.compete(mutator);
 		}
 
 		@Override
@@ -240,10 +243,7 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 
 		@Override
 		protected double computeInterest() {
-			// FIXME consider average time to improve (window)
-			// TODO consider mutator-dependent neighboring size
-			// TODO formalize computation
-			double optimality = tracker.getOptimalityWith(mutator);
+			double optimality = optimizer.getOptimalityWith(mutator);
 			double interest = 1 - optimality;
 			logger.fine("Mutation: O=" + optimality + " => " + interest);
 			return interest;
@@ -251,7 +251,7 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 
 		@Override
 		public String toString() {
-			return "Mutator[" + mutator + ", " + tracker + "] ("
+			return "Mutator[" + mutator + ", " + optimizer + "] ("
 					+ evaluateInterest() + ")";
 		}
 	}
@@ -269,7 +269,7 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 
 		@Override
 		public void execute() {
-			trackerPool.push(explorator, population);
+			optimizerPool.push(explorator.generates(population));
 		}
 
 		@Override
@@ -279,13 +279,10 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 
 		@Override
 		protected double computeInterest() {
-			// FIXME use improvement history (pools)
-			// TODO use tournament neighboring size to weight
-			// TODO formalize computation
 			double interest = 1;
 			for (Mutator<Individual> mutator : mutators) {
-				for (Tracker<Individual> tracker : trackerPool) {
-					double optimality = tracker.getOptimalityWith(mutator);
+				for (Optimizer<Individual> optimizer : optimizerPool) {
+					double optimality = optimizer.getOptimalityWith(mutator);
 					interest = Math.min(interest, optimality);
 				}
 			}

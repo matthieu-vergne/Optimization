@@ -314,19 +314,19 @@ public class ExperimentalIncubatorTest {
 
 		manager.push(9);
 		assertEquals(1, manager.getPopulation().size());
-		assertEquals(9, (int) manager.getTrackerPool().getBest().next());
+		assertEquals(9, (int) manager.getOptimizerPool().getBest().next());
 		manager.incubate();
 		assertEquals(1, manager.getPopulation().size());
-		assertEquals(8, (int) manager.getTrackerPool().getBest().next());
+		assertEquals(8, (int) manager.getOptimizerPool().getBest().next());
 		manager.incubate();
 		assertEquals(1, manager.getPopulation().size());
-		assertEquals(6, (int) manager.getTrackerPool().getBest().next());
+		assertEquals(6, (int) manager.getOptimizerPool().getBest().next());
 		manager.incubate();
 		assertEquals(1, manager.getPopulation().size());
-		assertEquals(2, (int) manager.getTrackerPool().getBest().next());
+		assertEquals(2, (int) manager.getOptimizerPool().getBest().next());
 		manager.incubate();
 		assertEquals(1, manager.getPopulation().size());
-		assertEquals(2, (int) manager.getTrackerPool().getBest().next());
+		assertEquals(2, (int) manager.getOptimizerPool().getBest().next());
 	}
 
 	@Ignore
@@ -340,20 +340,20 @@ public class ExperimentalIncubatorTest {
 		assertEquals(0, incubator.getPopulation().size());
 		incubator.incubate(); // random 6
 		assertEquals(1, incubator.getPopulation().size());
-		assertEquals(6, (int) incubator.getTrackerPool().getBest().next());
+		assertEquals(6, (int) incubator.getOptimizerPool().getBest().next());
 
 		for (int i = 0; i < 101; i++) {
 			System.err.println("Round A" + i);
 			incubator.incubate(); // mutate 6
 			System.err.println("Check A" + i);
 			assertEquals(1, incubator.getPopulation().size());
-			assertEquals(2, (int) incubator.getTrackerPool().getBest().next());
+			assertEquals(2, (int) incubator.getOptimizerPool().getBest().next());
 		}
 
 		{
 			incubator.incubate(); // random 1
 			assertEquals(2, incubator.getPopulation().size());
-			Iterator<Integer> best = incubator.getTrackerPool().getBest();
+			Iterator<Integer> best = incubator.getOptimizerPool().getBest();
 			assertEquals(1, (int) best.next());
 			assertEquals(2, (int) best.next());
 		}
@@ -363,13 +363,13 @@ public class ExperimentalIncubatorTest {
 			incubator.incubate(); // mutate 1, 2 looses
 			System.err.println("Check B" + i);
 			assertEquals(1, incubator.getPopulation().size());
-			assertEquals(1, (int) incubator.getTrackerPool().getBest().next());
+			assertEquals(1, (int) incubator.getOptimizerPool().getBest().next());
 		}
 
 		{
 			incubator.incubate(); // random 4
 			assertEquals(2, incubator.getPopulation().size());
-			Iterator<Integer> best = incubator.getTrackerPool().getBest();
+			Iterator<Integer> best = incubator.getOptimizerPool().getBest();
 			assertEquals(1, (int) best.next());
 			assertEquals(4, (int) best.next());
 		}
@@ -379,13 +379,13 @@ public class ExperimentalIncubatorTest {
 			incubator.incubate(); // mutate 4
 			System.err.println("Check C" + i);
 			assertEquals(2, incubator.getPopulation().size());
-			assertEquals(1, (int) incubator.getTrackerPool().getBest().next());
+			assertEquals(1, (int) incubator.getOptimizerPool().getBest().next());
 		}
 
 		{
 			incubator.incubate(); // random 2
 			assertEquals(3, incubator.getPopulation().size());
-			Iterator<Integer> best = incubator.getTrackerPool().getBest();
+			Iterator<Integer> best = incubator.getOptimizerPool().getBest();
 			assertEquals(1, (int) best.next());
 			assertEquals(2, (int) best.next());
 			assertEquals(4, (int) best.next());
@@ -396,13 +396,13 @@ public class ExperimentalIncubatorTest {
 			incubator.incubate(); // mutate 2, 4 looses
 			System.err.println("Check D" + i);
 			assertEquals(2, incubator.getPopulation().size());
-			assertEquals(1, (int) incubator.getTrackerPool().getBest().next());
+			assertEquals(1, (int) incubator.getOptimizerPool().getBest().next());
 		}
 
 		{
 			incubator.incubate(); // random 4
 			assertEquals(3, incubator.getPopulation().size());
-			Iterator<Integer> best = incubator.getTrackerPool().getBest();
+			Iterator<Integer> best = incubator.getOptimizerPool().getBest();
 			assertEquals(1, (int) best.next());
 			assertEquals(2, (int) best.next());
 			assertEquals(4, (int) best.next());
@@ -413,21 +413,21 @@ public class ExperimentalIncubatorTest {
 			incubator.incubate(); // mutate 4
 			System.err.println("Check E" + i);
 			assertEquals(3, incubator.getPopulation().size());
-			assertEquals(1, (int) incubator.getTrackerPool().getBest().next());
+			assertEquals(1, (int) incubator.getOptimizerPool().getBest().next());
 		}
 
 		while (incubator.getPopulation().size() == 3) {
 			System.err.println("Round align");
 			incubator.incubate(); // mutate all
 			System.err.println("Check align");
-			assertEquals(1, (int) incubator.getTrackerPool().getBest().next());
+			assertEquals(1, (int) incubator.getOptimizerPool().getBest().next());
 		}
 		assertEquals(2, incubator.getPopulation().size());
 
 		{
 			incubator.incubate(); // random 5
 			assertEquals(3, incubator.getPopulation().size());
-			Iterator<Integer> best = incubator.getTrackerPool().getBest();
+			Iterator<Integer> best = incubator.getOptimizerPool().getBest();
 			assertEquals(1, (int) best.next());
 			best.next();
 			assertEquals(5, (int) best.next());
@@ -436,7 +436,7 @@ public class ExperimentalIncubatorTest {
 		{
 			incubator.incubate(); // mutate 5, replaced by 0
 			assertEquals(3, incubator.getPopulation().size());
-			Iterator<Integer> best = incubator.getTrackerPool().getBest();
+			Iterator<Integer> best = incubator.getOptimizerPool().getBest();
 			assertEquals(0, (int) best.next());
 			assertEquals(1, (int) best.next());
 		}
@@ -446,14 +446,14 @@ public class ExperimentalIncubatorTest {
 			incubator.incubate(); // mutate 0
 			System.err.println("Check G" + i);
 			assertEquals(3, incubator.getPopulation().size());
-			assertEquals(0, (int) incubator.getTrackerPool().getBest().next());
+			assertEquals(0, (int) incubator.getOptimizerPool().getBest().next());
 		}
 
 		for (int i = 0; i < 1000; i++) {
 			System.err.println("Round H" + i);
 			incubator.incubate();
 			System.err.println("Check H" + i);
-			assertEquals(0, (int) incubator.getTrackerPool().getBest().next());
+			assertEquals(0, (int) incubator.getOptimizerPool().getBest().next());
 		}
 	}
 
