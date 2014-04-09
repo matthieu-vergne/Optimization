@@ -1,7 +1,6 @@
 package fr.vergne.optimization.incubator.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -457,4 +456,198 @@ public class ExperimentalIncubatorTest {
 		}
 	}
 
+	@Test
+	public void testMaxSize() {
+		ExperimentalIncubator<Integer> incubator = new ExperimentalIncubator<Integer>(
+				integerEvaluator);
+		assertEquals(0, incubator.getMaxSize());
+		assertEquals(0, incubator.getPopulation().size());
+
+		incubator.push(1);
+		assertEquals(0, incubator.getMaxSize());
+		assertEquals(1, incubator.getPopulation().size());
+
+		incubator.push(1);
+		assertEquals(0, incubator.getMaxSize());
+		assertEquals(2, incubator.getPopulation().size());
+
+		incubator.push(1);
+		assertEquals(0, incubator.getMaxSize());
+		assertEquals(3, incubator.getPopulation().size());
+
+		incubator.push(1);
+		assertEquals(0, incubator.getMaxSize());
+		assertEquals(4, incubator.getPopulation().size());
+
+		incubator.push(1);
+		assertEquals(0, incubator.getMaxSize());
+		assertEquals(5, incubator.getPopulation().size());
+
+		incubator.push(1);
+		assertEquals(0, incubator.getMaxSize());
+		assertEquals(6, incubator.getPopulation().size());
+
+		incubator.push(1);
+		assertEquals(0, incubator.getMaxSize());
+		assertEquals(7, incubator.getPopulation().size());
+
+		incubator.push(1);
+		assertEquals(0, incubator.getMaxSize());
+		assertEquals(8, incubator.getPopulation().size());
+
+		incubator.setMaxSize(3);
+		assertEquals(3, incubator.getMaxSize());
+		assertEquals(3, incubator.getPopulation().size());
+
+		incubator.push(1);
+		assertEquals(3, incubator.getMaxSize());
+		assertEquals(3, incubator.getPopulation().size());
+
+		incubator.push(1);
+		assertEquals(3, incubator.getMaxSize());
+		assertEquals(3, incubator.getPopulation().size());
+
+		incubator.push(1);
+		assertEquals(3, incubator.getMaxSize());
+		assertEquals(3, incubator.getPopulation().size());
+
+		incubator.setMaxSize(5);
+		assertEquals(5, incubator.getMaxSize());
+		assertEquals(3, incubator.getPopulation().size());
+
+		incubator.push(1);
+		assertEquals(5, incubator.getMaxSize());
+		assertEquals(4, incubator.getPopulation().size());
+
+		incubator.push(1);
+		assertEquals(5, incubator.getMaxSize());
+		assertEquals(5, incubator.getPopulation().size());
+
+		incubator.push(1);
+		assertEquals(5, incubator.getMaxSize());
+		assertEquals(5, incubator.getPopulation().size());
+
+		incubator.push(1);
+		assertEquals(5, incubator.getMaxSize());
+		assertEquals(5, incubator.getPopulation().size());
+
+		incubator.setMaxSize(0);
+		assertEquals(0, incubator.getMaxSize());
+		assertEquals(5, incubator.getPopulation().size());
+
+		incubator.push(1);
+		assertEquals(0, incubator.getMaxSize());
+		assertEquals(6, incubator.getPopulation().size());
+
+		incubator.push(1);
+		assertEquals(0, incubator.getMaxSize());
+		assertEquals(7, incubator.getPopulation().size());
+	}
+	
+	@Test
+	public void testMaxSizeWithIncubation() {
+		ExperimentalIncubator<Integer> incubator = new ExperimentalIncubator<Integer>(
+				integerEvaluator);
+		incubator.addExplorator(randomExplorator);
+		incubator.addMutator(mutatorModulo);
+		incubator.addMutator(mutatorPlusOne);
+		assertEquals(0, incubator.getMaxSize());
+		assertEquals(0, incubator.getPopulation().size());
+
+		int count = 0;
+		while (incubator.getPopulation().size() < 5) {
+			incubator.incubate();
+			count++;
+		}
+		assertEquals(5, incubator.getPopulation().size());
+		incubator.setMaxSize(3);
+		assertEquals(3, incubator.getPopulation().size());
+		for (int i = 0; i < count; i++) {
+			incubator.incubate();
+			assertEquals(3, incubator.getPopulation().size());
+		}
+	}
+
+	@Test
+	public void testMinSizeWithIncubation() {
+		ExperimentalIncubator<Integer> incubator = new ExperimentalIncubator<Integer>(
+				integerEvaluator);
+		incubator.addExplorator(randomExplorator);
+		incubator.addMutator(mutatorModulo);
+		incubator.addMutator(mutatorPlusOne);
+		assertEquals(0, incubator.getMinSize());
+		assertEquals(0, incubator.getPopulation().size());
+
+		incubator.setMinSize(3);
+		assertEquals(0, incubator.getPopulation().size());
+		incubator.incubate();
+		assertEquals(1, incubator.getPopulation().size());
+		incubator.incubate();
+		assertEquals(2, incubator.getPopulation().size());
+		incubator.incubate();
+		assertEquals(3, incubator.getPopulation().size());
+		incubator.incubate();
+		assertEquals(3, incubator.getPopulation().size());
+	}
+
+	@Test
+	public void testMinMaxSizeConsistencyCheck() {
+		ExperimentalIncubator<Integer> incubator = new ExperimentalIncubator<Integer>(
+				integerEvaluator);
+		
+		incubator.setMinSize(3);
+		incubator.setMaxSize(4);
+		
+		incubator.setMinSize(3);
+		incubator.setMaxSize(3);
+		
+		incubator.setMinSize(3);
+		try {
+			incubator.setMaxSize(2);
+			fail("No exception thrown.");
+		} catch (IllegalArgumentException e) {
+		}
+		
+		incubator.setMaxSize(3);
+		try {
+			incubator.setMinSize(4);
+			fail("No exception thrown.");
+		} catch (IllegalArgumentException e) {
+		}
+	}
+
+	@Test
+	public void testOptimalitySavingForSizeReduction() {
+		ExperimentalIncubator<Integer> incubator = new ExperimentalIncubator<Integer>(
+				integerEvaluator);
+		incubator.push(1);
+		incubator.push(2);
+		incubator.push(3);
+		incubator.push(4);
+		incubator.push(5);
+
+		incubator.setMaxSize(3);
+		{
+			Iterator<Integer> iterator = incubator.getOptimizerPool().getBest();
+			assertEquals(1, (int) iterator.next());
+			assertEquals(2, (int) iterator.next());
+			assertEquals(3, (int) iterator.next());
+		}
+
+		incubator.push(4);
+		{
+			Iterator<Integer> iterator = incubator.getOptimizerPool().getBest();
+			assertEquals(1, (int) iterator.next());
+			assertEquals(2, (int) iterator.next());
+			assertEquals(4, (int) iterator.next());
+		}
+
+		incubator.push(5);
+		{
+			Iterator<Integer> iterator = incubator.getOptimizerPool().getBest();
+			assertEquals(1, (int) iterator.next());
+			assertEquals(2, (int) iterator.next());
+			assertEquals(5, (int) iterator.next());
+		}
+	}
 }

@@ -26,6 +26,8 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 	private final Competition<Individual> competition;
 	private final Random rand = new Random();
 	private final Logger logger = Logger.getAnonymousLogger();
+	private int minSize = 0;
+	private int maxSize = 0;
 	private boolean hasEvolved;
 
 	public <Value extends Comparable<Value>> ExperimentalIncubator(
@@ -76,7 +78,73 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 		return optimizerPool;
 	}
 
+	/**
+	 * 
+	 * @param minSize
+	 *            the minimal size of the population, 0 if no limit
+	 */
+	public void setMinSize(int minSize) {
+		if (maxSize > 0 && maxSize < minSize) {
+			throw new IllegalArgumentException(
+					"The minimal size cannot be higher than the maximal size.");
+		} else {
+			this.minSize = minSize;
+		}
+	}
+
+	/**
+	 * 
+	 * @return the minimal size of the population, 0 if no limit
+	 */
+	public int getMinSize() {
+		return minSize;
+	}
+
+	/**
+	 * 
+	 * @param maxSize
+	 *            the maximal size of the population, 0 if no limit
+	 */
+	public void setMaxSize(int maxSize) {
+		if (maxSize < minSize) {
+			throw new IllegalArgumentException(
+					"The maximal size cannot be lower than the minimal size.");
+		} else {
+			this.maxSize = maxSize;
+			reduceTo(maxSize);
+		}
+	}
+
+	/**
+	 * 
+	 * @return the maximal size of the population, 0 if no limit
+	 */
+	public int getMaxSize() {
+		return maxSize;
+	}
+
+	private void reduceTo(int maxSize) {
+		if (optimizerPool.size() > 1 && maxSize > 0) {
+			Iterator<Individual> iterator = optimizerPool.getBest();
+			while (iterator.hasNext() && maxSize > 0) {
+				iterator.next();
+				maxSize--;
+			}
+			while (iterator.hasNext()) {
+				iterator.next();
+				iterator.remove();
+			}
+		} else {
+			// nothing to remove
+		}
+	}
+
 	public void push(Individual individual) {
+		if (maxSize > 0) {
+			reduceTo(maxSize - 1);
+		} else {
+			// no reduction constraint
+		}
 		optimizerPool.push(individual);
 	}
 
@@ -243,10 +311,16 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 
 		@Override
 		protected double computeInterest() {
-			double optimality = optimizer.getOptimalityWith(mutator);
-			double interest = 1 - optimality;
-			logger.fine("Mutation: O=" + optimality + " => " + interest);
-			return interest;
+			if (optimizerPool.size() < minSize) {
+				logger.fine("Mutation: not enough population ("
+						+ optimizerPool.size() + ")");
+				return 0;
+			} else {
+				double optimality = optimizer.getOptimalityWith(mutator);
+				double interest = 1 - optimality;
+				logger.fine("Mutation: O=" + optimality + " => " + interest);
+				return interest;
+			}
 		}
 
 		@Override
@@ -269,6 +343,7 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 
 		@Override
 		public void execute() {
+			reduceTo(maxSize - 1);
 			optimizerPool.push(explorator.generates(population));
 		}
 
@@ -279,15 +354,22 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 
 		@Override
 		protected double computeInterest() {
-			double interest = 1;
-			for (Mutator<Individual> mutator : mutators) {
-				for (Optimizer<Individual> optimizer : optimizerPool) {
-					double optimality = optimizer.getOptimalityWith(mutator);
-					interest = Math.min(interest, optimality);
+			if (optimizerPool.size() < minSize) {
+				logger.fine("Explorator: not enough population ("
+						+ optimizerPool.size() + ")");
+				return 1;
+			} else {
+				double interest = 1;
+				for (Mutator<Individual> mutator : mutators) {
+					for (Optimizer<Individual> optimizer : optimizerPool) {
+						double optimality = optimizer
+								.getOptimalityWith(mutator);
+						interest = Math.min(interest, optimality);
+					}
 				}
+				logger.fine("Explorator => " + interest);
+				return interest;
 			}
-			logger.fine("Explorator => " + interest);
-			return interest;
 		}
 
 		@Override
