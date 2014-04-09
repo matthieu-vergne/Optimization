@@ -26,7 +26,7 @@ import fr.vergne.optimization.population.impl.OptimizerPool.Optimizer;
  */
 public class OptimizerPool<Individual> implements
 		Iterable<Optimizer<Individual>>, PopulationManager<Individual> {
-	private final Collection<Optimizer<Individual>> trackers = new LinkedList<Optimizer<Individual>>();
+	private final Collection<Optimizer<Individual>> optimizers = new LinkedList<Optimizer<Individual>>();
 	private final Competition<Individual> competition;
 
 	public OptimizerPool(Competition<Individual> competition) {
@@ -36,20 +36,20 @@ public class OptimizerPool<Individual> implements
 	@Override
 	public Collection<Individual> getPopulation() {
 		Collection<Individual> population = new LinkedList<Individual>();
-		for (Optimizer<Individual> tracker : trackers) {
-			population.add(tracker.getRepresentative());
+		for (Optimizer<Individual> optimizer : optimizers) {
+			population.add(optimizer.getRepresentative());
 		}
 		return population;
 	}
 
 	@Override
 	public Iterator<Optimizer<Individual>> iterator() {
-		return trackers.iterator();
+		return optimizers.iterator();
 	}
 
 	@Override
 	public void push(Individual individual) {
-		trackers.add(new Optimizer<Individual>(competition, individual));
+		optimizers.add(new Optimizer<Individual>(competition, individual));
 	}
 
 	@Override
