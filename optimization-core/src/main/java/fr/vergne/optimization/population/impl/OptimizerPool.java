@@ -65,6 +65,10 @@ public class OptimizerPool<Individual> implements
 		}
 	}
 
+	public int size() {
+		return optimizers.size();
+	}
+
 	@Override
 	public Iterator<Individual> getBest() {
 		return new Iterator<Individual>() {
