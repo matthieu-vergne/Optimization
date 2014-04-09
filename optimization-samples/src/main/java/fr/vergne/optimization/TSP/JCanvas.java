@@ -5,20 +5,31 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import fr.vergne.optimization.TSP.path.AbstractPath;
+import fr.vergne.optimization.TSP.path.AbstractPath.Transition;
+import fr.vergne.optimization.TSP.path.Location;
+
 public class JCanvas extends JPanel {
 	private static final long serialVersionUID = 1L;
 	private final JFrame frame;
-	private Path path = new Path(Collections.<Location> emptyList()) {
+	private AbstractPath path = new AbstractPath() {
 		public Double getLength() {
 			return Double.MAX_VALUE;
-		};
+		}
+
+		@Override
+		public Collection<Transition> getTransitions() {
+			return Collections.<Transition> emptyList();
+		}
 	};
 	private int radius;
 	private double xRate;
@@ -39,8 +50,8 @@ public class JCanvas extends JPanel {
 		frame.setVisible(true);
 	}
 
-	public void setPath(Path path) {
-		boolean wasEmpty = getPath().getLocations().isEmpty();
+	public void setPath(AbstractPath path) {
+		boolean wasEmpty = getPath().getTransitions().isEmpty();
 		this.path = path;
 		if (wasEmpty) {
 			resize();
@@ -51,9 +62,12 @@ public class JCanvas extends JPanel {
 	private void resize() {
 		double xMax = 1;
 		double yMax = 1;
-		for (Location location : path.getLocations()) {
-			xMax = Math.max(location.getX(), xMax);
-			yMax = Math.max(location.getY(), yMax);
+		for (Transition transition : path.getTransitions()) {
+			for (Location location : Arrays.asList(transition.getL1(),
+					transition.getL2())) {
+				xMax = Math.max(location.getX(), xMax);
+				yMax = Math.max(location.getY(), yMax);
+			}
 		}
 
 		radius = 5;
@@ -67,7 +81,7 @@ public class JCanvas extends JPanel {
 				+ radius + dy);
 	}
 
-	public Path getPath() {
+	public AbstractPath getPath() {
 		return path;
 	}
 
@@ -75,19 +89,21 @@ public class JCanvas extends JPanel {
 		g.clearRect(0, 0, getWidth(), getHeight());
 		Color originalColor = g.getColor();
 
-		if (path.getLocations().isEmpty()) {
+		if (path.getTransitions().isEmpty()) {
 			return;
 		} else {
 			g.setColor(Color.RED);
-			List<Location> remains = new LinkedList<Location>(path.getLocations());
-			remains.add(remains.get(0));
-			Location start = remains.remove(0);
-			while (!remains.isEmpty()) {
-				Location end = remains.remove(0);
-				int xStart = (int) (start.getX() * xRate);
-				int yStart = (int) (start.getY() * yRate);
-				int xEnd = (int) (end.getX() * xRate);
-				int yEnd = (int) (end.getY() * yRate);
+			Set<Location> locations = new HashSet<Location>();
+			for (Transition transition : path.getTransitions()) {
+				Location from = transition.getL1();
+				Location to = transition.getL2();
+				locations.add(from);
+				locations.add(to);
+
+				int xStart = (int) (from.getX() * xRate);
+				int yStart = (int) (from.getY() * yRate);
+				int xEnd = (int) (to.getX() * xRate);
+				int yEnd = (int) (to.getY() * yRate);
 				int[] xPoints = new int[] { xStart, xEnd, xEnd, xStart };
 				int[] yPoints = new int[] { yStart, yEnd, yEnd, yStart };
 				if (Math.abs(xStart - xEnd) <= Math.abs(yStart - yEnd)) {
@@ -102,11 +118,10 @@ public class JCanvas extends JPanel {
 					yPoints[3]--;
 				}
 				g.fillPolygon(xPoints, yPoints, xPoints.length);
-				start = end;
 			}
 
 			g.setColor(Color.BLUE);
-			for (Location location : path.getLocations()) {
+			for (Location location : locations) {
 				int x = (int) (location.getX() * xRate) - radius;
 				int y = (int) (location.getY() * yRate) - radius;
 				int diameter = 2 * radius;

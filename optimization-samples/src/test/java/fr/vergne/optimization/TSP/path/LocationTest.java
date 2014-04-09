@@ -1,10 +1,10 @@
-package fr.vergne.optimization.TSP;
+package fr.vergne.optimization.TSP.path;
 
 import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import fr.vergne.optimization.TSP.Location;
+import fr.vergne.optimization.TSP.path.Location;
 
 public class LocationTest {
 

@@ -1,19 +1,24 @@
-package fr.vergne.optimization.TSP;
+package fr.vergne.optimization.TSP.path;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
 
-import fr.vergne.optimization.TSP.Location;
-import fr.vergne.optimization.TSP.Path;
+import fr.vergne.optimization.TSP.path.AbstractPath.Transition;
 
-public class PathTest {
+public abstract class AbstractPathTest<Path extends AbstractPath> {
 
+	protected abstract Path generatePath(List<Location> locations);
+
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testEquals() {
 		Location l1 = new Location(1, 0);
@@ -21,30 +26,30 @@ public class PathTest {
 		Location l3 = new Location(3, 0);
 		Location l4 = new Location(4, 0);
 
-		Path p1234 = new Path(Arrays.asList(l1, l2, l3, l4));
-		Path p1243 = new Path(Arrays.asList(l1, l2, l4, l3));
-		Path p1324 = new Path(Arrays.asList(l1, l3, l2, l4));
-		Path p1342 = new Path(Arrays.asList(l1, l3, l4, l2));
-		Path p1423 = new Path(Arrays.asList(l1, l4, l2, l3));
-		Path p1432 = new Path(Arrays.asList(l1, l4, l3, l2));
-		Path p2134 = new Path(Arrays.asList(l2, l1, l3, l4));
-		Path p2143 = new Path(Arrays.asList(l2, l1, l4, l3));
-		Path p2314 = new Path(Arrays.asList(l2, l3, l1, l4));
-		Path p2341 = new Path(Arrays.asList(l2, l3, l4, l1));
-		Path p2413 = new Path(Arrays.asList(l2, l4, l1, l3));
-		Path p2431 = new Path(Arrays.asList(l2, l4, l3, l1));
-		Path p3214 = new Path(Arrays.asList(l3, l2, l1, l4));
-		Path p3241 = new Path(Arrays.asList(l3, l2, l4, l1));
-		Path p3124 = new Path(Arrays.asList(l3, l1, l2, l4));
-		Path p3142 = new Path(Arrays.asList(l3, l1, l4, l2));
-		Path p3421 = new Path(Arrays.asList(l3, l4, l2, l1));
-		Path p3412 = new Path(Arrays.asList(l3, l4, l1, l2));
-		Path p4231 = new Path(Arrays.asList(l4, l2, l3, l1));
-		Path p4213 = new Path(Arrays.asList(l4, l2, l1, l3));
-		Path p4321 = new Path(Arrays.asList(l4, l3, l2, l1));
-		Path p4312 = new Path(Arrays.asList(l4, l3, l1, l2));
-		Path p4123 = new Path(Arrays.asList(l4, l1, l2, l3));
-		Path p4132 = new Path(Arrays.asList(l4, l1, l3, l2));
+		Path p1234 = generatePath(Arrays.asList(l1, l2, l3, l4));
+		Path p1243 = generatePath(Arrays.asList(l1, l2, l4, l3));
+		Path p1324 = generatePath(Arrays.asList(l1, l3, l2, l4));
+		Path p1342 = generatePath(Arrays.asList(l1, l3, l4, l2));
+		Path p1423 = generatePath(Arrays.asList(l1, l4, l2, l3));
+		Path p1432 = generatePath(Arrays.asList(l1, l4, l3, l2));
+		Path p2134 = generatePath(Arrays.asList(l2, l1, l3, l4));
+		Path p2143 = generatePath(Arrays.asList(l2, l1, l4, l3));
+		Path p2314 = generatePath(Arrays.asList(l2, l3, l1, l4));
+		Path p2341 = generatePath(Arrays.asList(l2, l3, l4, l1));
+		Path p2413 = generatePath(Arrays.asList(l2, l4, l1, l3));
+		Path p2431 = generatePath(Arrays.asList(l2, l4, l3, l1));
+		Path p3214 = generatePath(Arrays.asList(l3, l2, l1, l4));
+		Path p3241 = generatePath(Arrays.asList(l3, l2, l4, l1));
+		Path p3124 = generatePath(Arrays.asList(l3, l1, l2, l4));
+		Path p3142 = generatePath(Arrays.asList(l3, l1, l4, l2));
+		Path p3421 = generatePath(Arrays.asList(l3, l4, l2, l1));
+		Path p3412 = generatePath(Arrays.asList(l3, l4, l1, l2));
+		Path p4231 = generatePath(Arrays.asList(l4, l2, l3, l1));
+		Path p4213 = generatePath(Arrays.asList(l4, l2, l1, l3));
+		Path p4321 = generatePath(Arrays.asList(l4, l3, l2, l1));
+		Path p4312 = generatePath(Arrays.asList(l4, l3, l1, l2));
+		Path p4123 = generatePath(Arrays.asList(l4, l1, l2, l3));
+		Path p4132 = generatePath(Arrays.asList(l4, l1, l3, l2));
 
 		Map<Path, Collection<Path>> map = new HashMap<Path, Collection<Path>>();
 		map.put(p1234, Arrays.asList(p1234, p4123, p3412, p2341, p4321, p1432,
@@ -106,6 +111,22 @@ public class PathTest {
 
 			}
 		}
+	}
+
+	@Test
+	public void testExploder() {
+		Location l1 = new Location(1, 0);
+		Location l2 = new Location(2, 0);
+		Location l3 = new Location(3, 0);
+		Location l4 = new Location(4, 0);
+		Collection<Transition> transitions = AbstractPath.explode(Arrays
+				.asList(l1, l2, l3, l4));
+
+		assertEquals(transitions.toString(), 4, transitions.size());
+		assertTrue(transitions.contains(new Transition(l1, l2)));
+		assertTrue(transitions.contains(new Transition(l2, l3)));
+		assertTrue(transitions.contains(new Transition(l3, l4)));
+		assertTrue(transitions.contains(new Transition(l4, l1)));
 	}
 
 }

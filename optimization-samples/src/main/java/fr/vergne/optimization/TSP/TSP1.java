@@ -11,81 +11,70 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import fr.vergne.optimization.TSP.path.Location;
+import fr.vergne.optimization.TSP.path.Path1;
 import fr.vergne.optimization.generator.Explorator;
 import fr.vergne.optimization.generator.Mutator;
-import fr.vergne.optimization.population.impl.OptimizerPool.Optimizer;
 
-public class TSP {
-	private static long startTime;
+public class TSP1 extends AbstractTSP<Path1> {
 	private final static Random rand = new Random();
+	private static final Logger log = Logger.getAnonymousLogger();
 
 	public static void main(String[] args) throws IOException {
-		final Logger log = Logger.getAnonymousLogger();
-		log.setLevel(Level.ALL);
-		System.out.println("Parse file...");
-		final Collection<Location> locations = CsvReader
-				.parse("res/250cities.csv");
-		PathIncubator incubator = new PathIncubator();
+		new TSP1().run();
+	}
 
-		System.out.println("Init mutations...");
-		Explorator<Path> randomExplorator = new Explorator<Path>() {
+	@Override
+	protected PathIncubator<Path1> getIncubator(Collection<Location> locations) {
+		PathIncubator<Path1> incubator = new PathIncubator<Path1>();
+		for (Explorator<Path1> explorator : getExplorators(locations)) {
+			incubator.addExplorator(explorator);
+		}
+		for (Mutator<Path1> mutator : getMutators(locations)) {
+			incubator.addMutator(mutator);
+		}
+		return incubator;
+	}
 
-			@Override
-			public String toString() {
-				return "random";
-			}
-
-			@Override
-			public boolean isApplicableOn(Collection<Path> configuration) {
-				return true;
-			}
-
-			@Override
-			public Path generates(Collection<Path> population) {
-				List<Location> genes = new LinkedList<Location>(locations);
-				Collections.shuffle(genes);
-				Path path = new Path(genes);
-				System.out.println("Random: " + path);
-				return path;
-			}
-		};
-		Mutator<Path> littleMutation = new Mutator<Path>() {
+	@SuppressWarnings("unchecked")
+	protected Collection<Mutator<Path1>> getMutators(
+			Collection<Location> locations) {
+		Mutator<Path1> littleMutation = new Mutator<Path1>() {
 			@Override
 			public String toString() {
 				return "little";
 			}
 
 			@Override
-			public boolean isApplicableOn(Path original) {
+			public boolean isApplicableOn(Path1 original) {
 				return true;
 			}
 
 			@Override
-			public Path generates(Path original) {
+			public Path1 generates(Path1 original) {
 				List<Location> genes = original.getLocations();
 				int index = rand.nextInt(genes.size());
 				int newIndex = rand.nextInt(genes.size() - 1);
 				List<Location> newGenes = new LinkedList<Location>(genes);
 				newGenes.add(newIndex, newGenes.remove(index));
-				return new Path(newGenes);
+				return new Path1(newGenes);
 			}
 		};
-		Mutator<Path> bigMutation = new Mutator<Path>() {
+		Mutator<Path1> bigMutation = new Mutator<Path1>() {
 			@Override
 			public String toString() {
 				return "big";
 			}
 
 			@Override
-			public boolean isApplicableOn(Path original) {
+			public boolean isApplicableOn(Path1 original) {
 				return true;
 			}
 
 			@Override
-			public Path generates(Path original) {
+			public Path1 generates(Path1 original) {
 				List<Location> genes = original.getLocations();
 				List<Location> newGenes = new ArrayList<Location>(genes);
 				int start = rand.nextInt(genes.size());
@@ -96,10 +85,37 @@ public class TSP {
 					end = temp;
 				}
 				Collections.reverse(newGenes.subList(start, end));
-				return new Path(newGenes);
+				return new Path1(newGenes);
 			}
 		};
-		Explorator<Path> combinator = new Explorator<Path>() {
+		return Arrays.asList(littleMutation, bigMutation);
+	}
+
+	@SuppressWarnings("unchecked")
+	protected Collection<Explorator<Path1>> getExplorators(
+			final Collection<Location> locations) {
+		Explorator<Path1> random = new Explorator<Path1>() {
+
+			@Override
+			public String toString() {
+				return "random";
+			}
+
+			@Override
+			public boolean isApplicableOn(Collection<Path1> configuration) {
+				return true;
+			}
+
+			@Override
+			public Path1 generates(Collection<Path1> population) {
+				List<Location> genes = new LinkedList<Location>(locations);
+				Collections.shuffle(genes);
+				Path1 path = new Path1(genes);
+				System.out.println("Random: " + path);
+				return path;
+			}
+		};
+		Explorator<Path1> combinator = new Explorator<Path1>() {
 			@Override
 			public String toString() {
 				return "combinator";
@@ -108,12 +124,12 @@ public class TSP {
 			private final Random rand = new Random();
 
 			@Override
-			public boolean isApplicableOn(Collection<Path> population) {
+			public boolean isApplicableOn(Collection<Path1> population) {
 				return population.size() > 1;
 			}
 
 			@Override
-			public Path generates(Collection<Path> population) {
+			public Path1 generates(Collection<Path1> population) {
 				log.info("Explorating...");
 				List<Location> remaining = new LinkedList<Location>(locations);
 				LinkedList<Location> genes = new LinkedList<Location>();
@@ -129,7 +145,7 @@ public class TSP {
 					for (Location location : remaining) {
 						votes.put(location, 0);
 					}
-					for (Path voter : population) {
+					for (Path1 voter : population) {
 						List<Location> genes2 = voter.getLocations();
 						int index = genes2.indexOf(from);
 						for (int delta : Arrays.asList(1, geneSize - 1)) {
@@ -164,56 +180,13 @@ public class TSP {
 							+ best);
 				}
 
-				Path path = new Path(genes);
+				Path1 path = new Path1(genes);
 				log.info("Explorator generated: " + path);
 				System.out.println("Combinator: " + path);
 				return path;
 			}
 		};
-
-		System.out.println("Init incubator...");
-		incubator.addExplorator(randomExplorator);
-		incubator.addExplorator(combinator);
-		incubator.addMutator(littleMutation);
-		incubator.addMutator(bigMutation);
-
-		JCanvas canvas = new JCanvas();
-		System.out.println("Start algo...");
-		startTime = System.currentTimeMillis();
-		Logger.getAnonymousLogger().getParent().getHandlers()[0]
-				.setLevel(Level.OFF);
-		do {
-			incubator.incubate();
-			displayResult(incubator, canvas);
-		} while (incubator.hasEvolved());
-	}
-
-	static long lastDisplay = 0;
-
-	private static void displayResult(PathIncubator incubator, JCanvas canvas) {
-		Path best = incubator.getOptimizerPool().getBest().next();
-		if (best.getLength() < canvas.getPath().getLength()
-				|| System.currentTimeMillis() > lastDisplay + 1000) {
-			lastDisplay = System.currentTimeMillis();
-			canvas.setPath(best);
-			double time = (double) (System.currentTimeMillis() - startTime) / 1000;
-			String terminal = String.format("%8.3fs| %8d| %5d -", time,
-					incubator.getGeneratedIndividuals(), incubator
-							.getPopulation().size());
-			for (Optimizer<Path> optimizer : incubator.getOptimizerPool()) {
-				Path path = optimizer.getRepresentative();
-				double length = (double) Math.round(path.getLength() * 100) / 100;
-				String desc = "" + length + " |";
-				for (Mutator<Path> mutator : incubator.getMutators()) {
-					double optimality = (double) Math.round(optimizer
-							.getOptimalityWith(mutator) * 100) / 100;
-					String initial = mutator.toString().substring(0, 1);
-					desc += initial + "=" + optimality + "|";
-				}
-				terminal += " " + (path == best ? "[" + desc + "]" : desc);
-			}
-			System.out.println(terminal);
-		}
+		return Arrays.asList(random, combinator);
 	}
 
 }

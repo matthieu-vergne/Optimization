@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import fr.vergne.optimization.TSP.path.Location;
+
 public class CsvReader {
 
 	public static Collection<Location> parse(String filepath)
