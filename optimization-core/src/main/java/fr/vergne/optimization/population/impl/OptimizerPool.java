@@ -52,12 +52,26 @@ public class OptimizerPool<Individual> implements
 		optimizers.add(new Optimizer<Individual>(competition, individual));
 	}
 
+	public void remove(Individual individual) {
+		Iterator<Optimizer<Individual>> iterator = optimizers.iterator();
+		while (iterator.hasNext()) {
+			Optimizer<Individual> optimizer = iterator.next();
+			if (optimizer.getRepresentative().equals(individual)) {
+				iterator.remove();
+				return;
+			} else {
+				continue;
+			}
+		}
+	}
+
 	@Override
 	public Iterator<Individual> getBest() {
 		return new Iterator<Individual>() {
 
 			private final List<Individual> remaining = new LinkedList<Individual>(
 					getPopulation());
+			private Individual best;
 
 			@Override
 			public boolean hasNext() {
@@ -67,7 +81,7 @@ public class OptimizerPool<Individual> implements
 			@Override
 			public Individual next() {
 				Iterator<Individual> iterator = remaining.iterator();
-				Individual best = iterator.next();
+				best = iterator.next();
 				while (iterator.hasNext()) {
 					best = competition.compete(best, iterator.next());
 				}
@@ -77,7 +91,7 @@ public class OptimizerPool<Individual> implements
 
 			@Override
 			public void remove() {
-				throw new UnsupportedOperationException();
+				OptimizerPool.this.remove(best);
 			}
 		};
 	}
