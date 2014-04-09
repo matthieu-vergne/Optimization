@@ -1,6 +1,7 @@
 package fr.vergne.optimization.incubator.impl;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Random;
@@ -20,31 +21,29 @@ import fr.vergne.optimization.population.impl.OptimizerPool.Optimizer;
 //FIXME document
 public class ExperimentalIncubator<Individual> implements Incubator<Individual> {
 
+	private final static Random rand = new Random();
 	private final OptimizerPool<Individual> optimizerPool;
 	private final Collection<Mutator<Individual>> mutators = new LinkedList<Mutator<Individual>>();
 	private final Collection<Explorator<Individual>> explorators = new LinkedList<Explorator<Individual>>();
 	private final Competition<Individual> competition;
-	private final Random rand = new Random();
 	private final Logger logger = Logger.getAnonymousLogger();
 	private int minSize = 0;
 	private int maxSize = 0;
 	private boolean hasEvolved;
 
-	public <Value extends Comparable<Value>> ExperimentalIncubator(
-			final Evaluator<Individual, Value> evaluator) {
+	public ExperimentalIncubator(final Comparator<Individual> comparator) {
 		logger.setLevel(Level.ALL);
 		this.competition = new Competition<Individual>() {
 
 			@Override
 			public Individual compete(Individual competitor1,
 					Individual competitor2) {
-				Value value1 = evaluator.evaluate(competitor1);
-				Value value2 = evaluator.evaluate(competitor2);
-				if (value1.compareTo(value2) < 0) {
+				int comparison = comparator.compare(competitor1, competitor2);
+				if (comparison < 0) {
 					return competitor1;
-				} else if (value1.compareTo(value2) > 0) {
+				} else if (comparison > 0) {
 					return competitor2;
-				} else if (value1.compareTo(value2) == 0) {
+				} else {
 					/*
 					 * TODO Avoid convergence hiding: if competitors have the
 					 * exactly same value, we can spend time switching between
@@ -60,13 +59,23 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 					 * it should do so.
 					 */
 					return rand.nextBoolean() ? competitor1 : competitor2;
-				} else {
-					throw new IllegalStateException(
-							"This case should not happen.");
 				}
 			}
 		};
 		this.optimizerPool = new OptimizerPool<Individual>(competition);
+	}
+
+	public <Value extends Comparable<Value>> ExperimentalIncubator(
+			final Evaluator<Individual, Value> evaluator) {
+		this(new Comparator<Individual>() {
+
+			@Override
+			public int compare(Individual i1, Individual i2) {
+				Value value1 = evaluator.evaluate(i1);
+				Value value2 = evaluator.evaluate(i2);
+				return value1.compareTo(value2);
+			}
+		});
 	}
 
 	@Override
