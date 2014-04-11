@@ -42,14 +42,19 @@ public abstract class AbstractPath implements Comparable<AbstractPath> {
 			for (Transition transition : getTransitions()) {
 				Location from = transition.getL1();
 				Location to = transition.getL2();
-				double dx = from.getX() - to.getX();
-				double dy = from.getY() - to.getY();
-				length += Math.sqrt(dx * dx + dy * dy);
+				length += distance(from, to);
 			}
 		} else {
 			// already computed
 		}
 		return length;
+	}
+
+	public static double distance(Location from, Location to) {
+		double dx = from.getX() - to.getX();
+		double dy = from.getY() - to.getY();
+		double distance = Math.sqrt(dx * dx + dy * dy);
+		return distance;
 	}
 
 	@Override
