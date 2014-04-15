@@ -43,6 +43,15 @@ public class OptimizerPool<Individual> implements
 		return competition;
 	}
 
+	public void setOptimalityCheker(
+			OptimalityChecker<Individual> optimalityCheker) {
+		this.optimalityCheker = optimalityCheker;
+	}
+
+	public OptimalityChecker<Individual> getOptimalityCheker() {
+		return optimalityCheker;
+	}
+
 	@Override
 	public Collection<Individual> getPopulation() {
 		Collection<Individual> population = new LinkedList<Individual>();
@@ -52,13 +61,11 @@ public class OptimizerPool<Individual> implements
 		return population;
 	}
 
-	public void setOptimalityCheker(
-			OptimalityChecker<Individual> optimalityCheker) {
-		this.optimalityCheker = optimalityCheker;
-	}
-
-	public OptimalityChecker<Individual> getOptimalityCheker() {
-		return optimalityCheker;
+	/**
+	 * Remove all the current {@link Optimizer}s.
+	 */
+	public void clear() {
+		optimizers.clear();
 	}
 
 	@Override
@@ -87,13 +94,6 @@ public class OptimizerPool<Individual> implements
 
 	public int size() {
 		return optimizers.size();
-	}
-
-	/**
-	 * Remove all the current {@link Optimizer}s.
-	 */
-	public void clear() {
-		optimizers.clear();
 	}
 
 	@Override
