@@ -69,6 +69,13 @@ public class OptimizerPool<Individual> implements
 		return optimizers.size();
 	}
 
+	/**
+	 * Remove all the current {@link Optimizer}s.
+	 */
+	public void clear() {
+		optimizers.clear();
+	}
+
 	@Override
 	public Iterator<Individual> getBest() {
 		return new Iterator<Individual>() {

@@ -83,6 +83,14 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 		return optimizerPool.getPopulation();
 	}
 
+	/**
+	 * Clear the population, allowing a new incubation process to start from
+	 * scratch.
+	 */
+	public void clear() {
+		optimizerPool.clear();
+	}
+
 	public OptimizerPool<Individual> getOptimizerPool() {
 		return optimizerPool;
 	}
