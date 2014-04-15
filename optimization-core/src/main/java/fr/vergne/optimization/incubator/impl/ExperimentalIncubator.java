@@ -25,7 +25,6 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 	private final OptimizerPool<Individual> optimizerPool;
 	private final Collection<Mutator<Individual>> mutators = new LinkedList<Mutator<Individual>>();
 	private final Collection<Explorator<Individual>> explorators = new LinkedList<Explorator<Individual>>();
-	private final Competition<Individual> competition;
 	private final Logger logger = Logger.getAnonymousLogger();
 	private int minSize = 0;
 	private int maxSize = 0;
@@ -33,7 +32,7 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 
 	public ExperimentalIncubator(final Comparator<Individual> comparator) {
 		logger.setLevel(Level.ALL);
-		this.competition = new Competition<Individual>() {
+		Competition<Individual> competition = new Competition<Individual>() {
 
 			@Override
 			public Individual compete(Individual competitor1,
