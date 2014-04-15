@@ -27,10 +27,18 @@ import fr.vergne.optimization.population.impl.OptimizerPool.Optimizer;
 public class OptimizerPool<Individual> implements
 		Iterable<Optimizer<Individual>>, PopulationManager<Individual> {
 	private final Collection<Optimizer<Individual>> optimizers = new LinkedList<Optimizer<Individual>>();
-	private final Competition<Individual> competition;
+	private Competition<Individual> competition;
 
 	public OptimizerPool(Competition<Individual> competition) {
+		setCompetition(competition);
+	}
+
+	public void setCompetition(Competition<Individual> competition) {
 		this.competition = competition;
+	}
+
+	public Competition<Individual> getCompetition() {
+		return competition;
 	}
 
 	@Override
