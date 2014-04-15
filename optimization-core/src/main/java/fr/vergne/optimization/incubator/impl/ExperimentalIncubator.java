@@ -44,21 +44,7 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 				} else if (comparison > 0) {
 					return competitor2;
 				} else {
-					/*
-					 * TODO Avoid convergence hiding: if competitors have the
-					 * exactly same value, we can spend time switching between
-					 * each other in a sequence of competitions. In the case
-					 * where better solutions are in their neighboring, it
-					 * allows to visit different parts of the space and the
-					 * optimizer can eventually exit such attractor, thus it
-					 * should not be avoided. But in the case where all
-					 * competitors are potential optima, switching between each
-					 * other makes the optimizer running indefinitely without
-					 * "seeing" any optimum. This can be rare, but in such a
-					 * case the optimizer never provide any convergence although
-					 * it should do so.
-					 */
-					return rand.nextBoolean() ? competitor1 : competitor2;
+					return null;
 				}
 			}
 		};

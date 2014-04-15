@@ -195,6 +195,7 @@ public class OptimizerPool<Individual> implements
 			Individual winner = competition.compete(representative, challenger);
 			logger.info("Competition: " + representative + " VS " + challenger
 					+ " => winner: " + winner);
+			winner = winner == null ? representative : winner;
 			if (winner.equals(representative)) {
 				if (!neighborReferences.containsKey(challengerGenerator)) {
 					neighborReferences.put(challengerGenerator, challenger);
@@ -241,8 +242,7 @@ public class OptimizerPool<Individual> implements
 
 	/**
 	 * A {@link Competition} aims at selecting a winner among two
-	 * {@link Competitor}s. This is a strict {@link Competition}, in the sense
-	 * that exactly one of the two {@link Competitor}s should be selected.
+	 * {@link Competitor}s.
 	 * 
 	 * @author Matthieu Vergne <matthieu.vergne@gmail.com>
 	 * 
@@ -255,7 +255,8 @@ public class OptimizerPool<Individual> implements
 		 *            a first {@link Competitor}
 		 * @param competitor2
 		 *            a second {@link Competitor}
-		 * @return the winner of the {@link Competition}
+		 * @return the winner of the {@link Competition}, <code>null</code> if
+		 *         there is no winner
 		 */
 		public Competitor compete(Competitor competitor1, Competitor competitor2);
 	}
