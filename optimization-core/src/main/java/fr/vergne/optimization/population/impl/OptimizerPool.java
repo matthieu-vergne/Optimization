@@ -173,13 +173,15 @@ public class OptimizerPool<Individual> implements
 		 *         representative for the given {@link Mutator}
 		 */
 		public double getOptimalityWith(Mutator<Individual> mutator) {
-			Integer loops = neighborLoops.get(mutator);
 			if (!mutator.isApplicableOn(representative)) {
 				return 1;
-			} else if (loops == null || loops == 0) {
-				return 0;
 			} else {
-				return (double) (loops - 1) / loops;
+				Integer loops = neighborLoops.get(mutator);
+				if (loops == null || loops == 0) {
+					return 0;
+				} else {
+					return (double) (loops - 1) / loops;
+				}
 			}
 		}
 
