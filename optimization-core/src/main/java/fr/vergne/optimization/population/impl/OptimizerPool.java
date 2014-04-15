@@ -29,6 +29,7 @@ public class OptimizerPool<Individual> implements
 		Iterable<Optimizer<Individual>>, PopulationManager<Individual> {
 	private final Collection<Optimizer<Individual>> optimizers = new LinkedList<Optimizer<Individual>>();
 	private Competition<Individual> competition;
+	private OptimalityChecker<Individual> optimalityCheker = null;
 
 	public OptimizerPool(Competition<Individual> competition) {
 		setCompetition(competition);
@@ -51,6 +52,15 @@ public class OptimizerPool<Individual> implements
 		return population;
 	}
 
+	public void setOptimalityCheker(
+			OptimalityChecker<Individual> optimalityCheker) {
+		this.optimalityCheker = optimalityCheker;
+	}
+
+	public OptimalityChecker<Individual> getOptimalityCheker() {
+		return optimalityCheker;
+	}
+
 	@Override
 	public Iterator<Optimizer<Individual>> iterator() {
 		return optimizers.iterator();
@@ -58,7 +68,8 @@ public class OptimizerPool<Individual> implements
 
 	@Override
 	public void push(Individual individual) {
-		optimizers.add(new Optimizer<Individual>(competition, individual));
+		optimizers
+				.add(new Optimizer<Individual>(competition, individual, this));
 	}
 
 	public void remove(Individual individual) {
@@ -137,13 +148,15 @@ public class OptimizerPool<Individual> implements
 		private final Map<Mutator<Individual>, Integer> neighborLoops = new HashMap<Mutator<Individual>, Integer>();
 		private final Map<InformedMutator<Individual>, Integer> neighborCounts = new HashMap<InformedMutator<Individual>, Integer>();
 		private final Competition<Individual> competition;
+		private final OptimizerPool<Individual> parentPool;
 		private Individual representative;
 		private final Logger logger = Logger.getAnonymousLogger();
 
 		public Optimizer(Competition<Individual> competition,
-				Individual individual) {
+				Individual individual, OptimizerPool<Individual> parent) {
 			this.competition = competition;
 			representative = individual;
+			parentPool = parent;
 		}
 
 		/**
@@ -175,7 +188,10 @@ public class OptimizerPool<Individual> implements
 		 *         representative for the given {@link Mutator}
 		 */
 		public double getOptimalityWith(Mutator<Individual> mutator) {
-			if (!mutator.isApplicableOn(representative)) {
+			if (!mutator.isApplicableOn(representative)
+					|| parentPool.getOptimalityCheker() != null
+					&& parentPool.getOptimalityCheker().isOptimal(
+							representative)) {
 				return 1;
 			} else if (mutator instanceof InformedMutator) {
 				InformedMutator<Individual> mut = (InformedMutator<Individual>) mutator;
@@ -287,5 +303,22 @@ public class OptimizerPool<Individual> implements
 		 *         there is no winner
 		 */
 		public Competitor compete(Competitor competitor1, Competitor competitor2);
+	}
+
+	/**
+	 * An {@link OptimalityChecker} allows to assess the optimality of an
+	 * {@link Individual}.
+	 * 
+	 * @author Matthieu Vergne <matthieu.vergne@gmail.com>
+	 * 
+	 * @param <Individual>
+	 */
+	public static interface OptimalityChecker<Individual> {
+		/**
+		 * 
+		 * @return <code>true</code> if the {@link Individual} is ensured to be
+		 *         an optimum (global or local), <code>false</code> otherwise
+		 */
+		public boolean isOptimal(Individual individual);
 	}
 }
