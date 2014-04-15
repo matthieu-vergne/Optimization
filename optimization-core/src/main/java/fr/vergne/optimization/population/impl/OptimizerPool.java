@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import fr.vergne.optimization.generator.InformedMutator;
 import fr.vergne.optimization.generator.Mutator;
 import fr.vergne.optimization.population.PopulationManager;
 import fr.vergne.optimization.population.impl.OptimizerPool.Optimizer;
@@ -134,6 +135,7 @@ public class OptimizerPool<Individual> implements
 	public static class Optimizer<Individual> {
 		private final Map<Mutator<Individual>, Individual> neighborReferences = new HashMap<Mutator<Individual>, Individual>();
 		private final Map<Mutator<Individual>, Integer> neighborLoops = new HashMap<Mutator<Individual>, Integer>();
+		private final Map<InformedMutator<Individual>, Integer> neighborCounts = new HashMap<InformedMutator<Individual>, Integer>();
 		private final Competition<Individual> competition;
 		private Individual representative;
 		private final Logger logger = Logger.getAnonymousLogger();
@@ -175,6 +177,17 @@ public class OptimizerPool<Individual> implements
 		public double getOptimalityWith(Mutator<Individual> mutator) {
 			if (!mutator.isApplicableOn(representative)) {
 				return 1;
+			} else if (mutator instanceof InformedMutator) {
+				InformedMutator<Individual> mut = (InformedMutator<Individual>) mutator;
+				Integer counts = neighborCounts.get(mut);
+				counts = counts == null ? 0 : counts;
+				if (mut.isNeighboringSizeStrict()) {
+					return (double) counts / mut.getNeighboringLimit();
+				} else {
+					double exp = Math.exp((double) counts
+							/ mut.getNeighboringLimit());
+					return exp / (1 + exp) * 2 - 1;
+				}
 			} else {
 				Integer loops = neighborLoops.get(mutator);
 				if (loops == null || loops == 0) {
@@ -198,26 +211,39 @@ public class OptimizerPool<Individual> implements
 			logger.info("Competition: " + representative + " VS " + challenger
 					+ " => winner: " + winner);
 			winner = winner == null ? representative : winner;
-			if (winner.equals(representative)) {
-				if (!neighborReferences.containsKey(challengerGenerator)) {
-					neighborReferences.put(challengerGenerator, challenger);
-					neighborLoops.put(challengerGenerator, 0);
-				} else if (neighborReferences.get(challengerGenerator) == null) {
-					neighborReferences.put(challengerGenerator, challenger);
-				} else if (neighborReferences.get(challengerGenerator).equals(
-						challenger)) {
-					neighborLoops.put(challengerGenerator,
-							neighborLoops.get(challengerGenerator) + 1);
-					neighborReferences.put(challengerGenerator, null);
+			if (challengerGenerator instanceof InformedMutator) {
+				if (winner.equals(representative)) {
+					InformedMutator<Individual> mutator = (InformedMutator<Individual>) challengerGenerator;
+					if (!neighborCounts.containsKey(challengerGenerator)) {
+						neighborCounts.put(mutator, 0);
+					} else {
+						neighborCounts.put(mutator,
+								neighborCounts.get(mutator) + 1);
+					}
 				} else {
-					// not a reference neighbor to consider
+					neighborCounts.clear();
 				}
 			} else {
-				representative = winner;
-				neighborReferences.clear();
-				neighborLoops.clear();
+				if (winner.equals(representative)) {
+					if (!neighborReferences.containsKey(challengerGenerator)) {
+						neighborReferences.put(challengerGenerator, challenger);
+						neighborLoops.put(challengerGenerator, 0);
+					} else if (neighborReferences.get(challengerGenerator) == null) {
+						neighborReferences.put(challengerGenerator, challenger);
+					} else if (neighborReferences.get(challengerGenerator)
+							.equals(challenger)) {
+						neighborLoops.put(challengerGenerator,
+								neighborLoops.get(challengerGenerator) + 1);
+						neighborReferences.put(challengerGenerator, null);
+					} else {
+						// not a reference neighbor to consider
+					}
+				} else {
+					neighborReferences.clear();
+					neighborLoops.clear();
+				}
 			}
-
+			representative = winner;
 		}
 
 		/**
