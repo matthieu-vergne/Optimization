@@ -366,7 +366,7 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 					for (Optimizer<Individual> optimizer : optimizerPool) {
 						double optimality = optimizer
 								.getOptimalityWith(mutator);
-						interest = Math.min(interest, optimality);
+						interest *= optimality;
 					}
 				}
 				logger.fine("Explorator => " + interest);
