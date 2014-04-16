@@ -4,10 +4,11 @@
 	<parent>
 		<groupId>fr.vergne.optimization</groupId>
 		<artifactId>optimization-project</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<version>1.0.0</version>
 	</parent>
 
 	<artifactId>optimization-samples</artifactId>
+	<packaging>jar</packaging>
 	<name>Optimization Samples</name>
 	<description>Optimization algorithms' examples.</description>
 	<inceptionYear>2014</inceptionYear>
@@ -16,7 +17,7 @@
 		<dependency>
 			<groupId>fr.vergne.optimization</groupId>
 			<artifactId>optimization-core</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
