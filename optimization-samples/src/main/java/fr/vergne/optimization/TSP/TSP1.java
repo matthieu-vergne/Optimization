@@ -62,10 +62,10 @@ public class TSP1 extends AbstractTSP<Path1> {
 				return new Path1(newGenes);
 			}
 		};
-		Mutator<Path1> bigMutation = new Mutator<Path1>() {
+		Mutator<Path1> reverseMutation = new Mutator<Path1>() {
 			@Override
 			public String toString() {
-				return "big";
+				return "reverse";
 			}
 
 			@Override
@@ -88,7 +88,7 @@ public class TSP1 extends AbstractTSP<Path1> {
 				return new Path1(newGenes);
 			}
 		};
-		return Arrays.asList(littleMutation, bigMutation);
+		return Arrays.asList(littleMutation, reverseMutation);
 	}
 
 	@SuppressWarnings("unchecked")
