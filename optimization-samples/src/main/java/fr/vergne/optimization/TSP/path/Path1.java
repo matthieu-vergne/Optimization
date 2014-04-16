@@ -2,14 +2,15 @@ package fr.vergne.optimization.TSP.path;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class Path1 extends AbstractPath {
 
-	private final ArrayList<Location> locations;
+	private final List<Location> locations;
 
 	public Path1(List<Location> locations) {
-		this.locations = new ArrayList<Location>(locations);
+		this.locations = Collections.unmodifiableList(new ArrayList<Location>(locations));
 	}
 
 	public List<Location> getLocations() {
