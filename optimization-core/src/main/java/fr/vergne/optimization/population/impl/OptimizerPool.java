@@ -32,6 +32,9 @@ public class OptimizerPool<Individual> implements
 	private Competition<Individual> competition;
 	private OptimalityChecker<Individual> optimalityCheker = null;
 
+	public OptimizerPool() {
+	}
+
 	public OptimizerPool(Competition<Individual> competition) {
 		setCompetition(competition);
 	}
