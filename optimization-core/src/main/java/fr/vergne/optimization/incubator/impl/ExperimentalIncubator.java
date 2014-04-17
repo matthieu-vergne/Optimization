@@ -18,7 +18,21 @@ import fr.vergne.optimization.population.impl.OptimizerPool;
 import fr.vergne.optimization.population.impl.OptimizerPool.Competition;
 import fr.vergne.optimization.population.impl.OptimizerPool.Optimizer;
 
-//FIXME document
+/**
+ * This {@link ExperimentalIncubator} has the purpose to provide an optimization
+ * algorithm able to manage global and local search while minimizing the need
+ * for parameters. For instance, while other algorithms require to provide
+ * algorithm-specific parameters (e.g. mutation and crossover ratios for a
+ * genetic algorithm) or are reduced to simplistic search algorithms (e.g. smart
+ * local search but naive restarts for hill climbing algorithms), this
+ * implementation aims at providing an optimization algorithm which maximizes
+ * the use of the knowledge provided as well as exploiting generic methods to
+ * deal with the potential lack of knowledge about the problem at hand.
+ * 
+ * @author Matthieu Vergne <matthieu.vergne@gmail.com>
+ * 
+ * @param <Individual>
+ */
 public class ExperimentalIncubator<Individual> implements Incubator<Individual> {
 
 	private final static Random rand = new Random();
