@@ -8,29 +8,24 @@
 	<name>Optimization Project</name>
 	<description>User-friendly optimization algorithms.</description>
 	<inceptionYear>2014</inceptionYear>
+	<url>https://github.com/matthieu-vergne/Optimization</url>
+	
+	<modules>
+		<module>optimization-core</module>
+		<module>optimization-samples</module>
+	</modules>
 
-	<distributionManagement>
-		<!-- SNAPSHOT
-		-->
-		<snapshotRepository>
-			<id>sonatype-snapshot</id>
-			<name>Sonatype Snapshot</name>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-		</snapshotRepository>
-		<!-- RELEASE
-		<repository>
-			<id>sonatype-release</id>
-			<name>Sonatype Release</name>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
-		</repository>
-		-->
-	</distributionManagement>
-
+	<scm>
+		<connection>scm:git:git://github.com/matthieu-vergne/Optimization.git</connection>
+		<developerConnection>scm:git:git://github.com/matthieu-vergne/Optimization.git</developerConnection>
+		<url>scm:git:git://github.com/matthieu-vergne/Optimization.git</url>
+	</scm>
+	
 	<issueManagement>
 		<system>GitHub</system>
 		<url>https://github.com/matthieu-vergne/Optimization/issues/</url>
 	</issueManagement>
-
+	
 	<licenses>
 		<license>
 			<name>BSD</name>
@@ -38,6 +33,7 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
+	
 	<developers>
 		<developer>
 			<name>Matthieu Vergne</name>
@@ -45,11 +41,7 @@
 			<url>https://github.com/matthieu-vergne</url>
 		</developer>
 	</developers>
-	<scm>
-		<connection>scm:git:git://github.com/matthieu-vergne/Optimization.git</connection>
-		<developerConnection>scm:git:git://github.com/matthieu-vergne/Optimization.git</developerConnection>
-		<url>scm:git:git://github.com/matthieu-vergne/Optimization.git</url>
-	</scm>
+	
 	<build>
 		<plugins>
 			<plugin>
@@ -100,9 +92,17 @@
 			</plugin>
 		</plugins>
 	</build>
-	<modules>
-		<module>optimization-core</module>
-		<module>optimization-samples</module>
-	</modules>
-	<url>https://github.com/matthieu-vergne/Optimization</url>
+	
+	<distributionManagement>
+		<snapshotRepository>
+			<id>sonatype-snapshot</id>
+			<name>Sonatype Snapshot</name>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>sonatype-release</id>
+			<name>Sonatype Release</name>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+		</repository>
+	</distributionManagement>
 </project>
