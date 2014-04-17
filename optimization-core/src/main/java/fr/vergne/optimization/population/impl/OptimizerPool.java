@@ -76,8 +76,7 @@ public class OptimizerPool<Individual> implements
 
 	@Override
 	public void push(Individual individual) {
-		optimizers
-				.add(new Optimizer<Individual>(competition, individual, this));
+		optimizers.add(new Optimizer<Individual>(individual, this));
 	}
 
 	public void remove(Individual individual) {
@@ -149,14 +148,11 @@ public class OptimizerPool<Individual> implements
 		private final Map<Mutator<Individual>, Individual> neighborReferences = new HashMap<Mutator<Individual>, Individual>();
 		private final Map<Mutator<Individual>, Integer> neighborLoops = new HashMap<Mutator<Individual>, Integer>();
 		private final Map<InformedMutator<Individual>, Integer> neighborCounts = new HashMap<InformedMutator<Individual>, Integer>();
-		private final Competition<Individual> competition;
 		private final OptimizerPool<Individual> parentPool;
 		private Individual representative;
 		public static final Logger logger = LoggerConfiguration.getSimpleLogger();
 
-		public Optimizer(Competition<Individual> competition,
-				Individual individual, OptimizerPool<Individual> parent) {
-			this.competition = competition;
+		public Optimizer(Individual individual, OptimizerPool<Individual> parent) {
 			representative = individual;
 			parentPool = parent;
 		}
@@ -225,6 +221,13 @@ public class OptimizerPool<Individual> implements
 		public <Input> void compete(Mutator<Individual> challengerGenerator) {
 			Individual challenger = challengerGenerator
 					.generates(representative);
+			Competition<Individual> competition = parentPool.getCompetition();
+			if (competition == null) {
+				throw new IllegalStateException(
+						"No competition operator has been provided.");
+			} else {
+				// computation can be done
+			}
 			Individual winner = competition.compete(representative, challenger);
 			logger.info("Competition: " + representative + " VS " + challenger
 					+ " => winner: " + winner);
