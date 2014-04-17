@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>fr.matthieu-vergne</groupId>
-		<artifactId>optimization-project</artifactId>
+		<artifactId>optimization</artifactId>
 		<version>1.0-SNAPSHOT</version>
 	</parent>
 
