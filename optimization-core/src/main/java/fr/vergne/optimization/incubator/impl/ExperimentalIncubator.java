@@ -30,7 +30,35 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 	private int maxSize = 0;
 	private boolean hasEvolved;
 
+	public ExperimentalIncubator() {
+		optimizerPool = new OptimizerPool<Individual>();
+	}
+
 	public ExperimentalIncubator(final Comparator<Individual> comparator) {
+		this();
+		setComparator(comparator);
+	}
+
+	public <Value extends Comparable<Value>> ExperimentalIncubator(
+			Evaluator<Individual, Value> evaluator) {
+		this();
+		setEvaluator(evaluator);
+	}
+
+	public <Value extends Comparable<Value>> void setEvaluator(
+			final Evaluator<Individual, Value> evaluator) {
+		setComparator(new Comparator<Individual>() {
+
+			@Override
+			public int compare(Individual i1, Individual i2) {
+				Value value1 = evaluator.evaluate(i1);
+				Value value2 = evaluator.evaluate(i2);
+				return value1.compareTo(value2);
+			}
+		});
+	}
+
+	public void setComparator(final Comparator<Individual> comparator) {
 		Competition<Individual> competition = new Competition<Individual>() {
 
 			@Override
@@ -46,20 +74,7 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 				}
 			}
 		};
-		this.optimizerPool = new OptimizerPool<Individual>(competition);
-	}
-
-	public <Value extends Comparable<Value>> ExperimentalIncubator(
-			final Evaluator<Individual, Value> evaluator) {
-		this(new Comparator<Individual>() {
-
-			@Override
-			public int compare(Individual i1, Individual i2) {
-				Value value1 = evaluator.evaluate(i1);
-				Value value2 = evaluator.evaluate(i2);
-				return value1.compareTo(value2);
-			}
-		});
+		optimizerPool.setCompetition(competition);
 	}
 
 	@Override
