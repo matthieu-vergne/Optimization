@@ -22,10 +22,10 @@ import fr.vergne.optimization.population.impl.OptimizerPool.Optimizer;
 public class ExperimentalIncubator<Individual> implements Incubator<Individual> {
 
 	private final static Random rand = new Random();
+	public final static Logger logger = LoggerConfiguration.getSimpleLogger();
 	private final OptimizerPool<Individual> optimizerPool;
 	private final Collection<Mutator<Individual>> mutators = new LinkedList<Mutator<Individual>>();
 	private final Collection<Explorator<Individual>> explorators = new LinkedList<Explorator<Individual>>();
-	public final Logger logger = LoggerConfiguration.getSimpleLogger();
 	private int minSize = 0;
 	private int maxSize = 0;
 	private boolean hasEvolved;
