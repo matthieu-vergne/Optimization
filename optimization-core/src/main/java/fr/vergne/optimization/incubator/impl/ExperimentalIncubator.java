@@ -6,9 +6,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.TreeMap;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import fr.vergne.logging.LoggerConfiguration;
 import fr.vergne.optimization.generator.Explorator;
 import fr.vergne.optimization.generator.Generator;
 import fr.vergne.optimization.generator.Mutator;
@@ -25,13 +25,12 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 	private final OptimizerPool<Individual> optimizerPool;
 	private final Collection<Mutator<Individual>> mutators = new LinkedList<Mutator<Individual>>();
 	private final Collection<Explorator<Individual>> explorators = new LinkedList<Explorator<Individual>>();
-	public final Logger logger = Logger.getAnonymousLogger();
+	public final Logger logger = LoggerConfiguration.getSimpleLogger();
 	private int minSize = 0;
 	private int maxSize = 0;
 	private boolean hasEvolved;
 
 	public ExperimentalIncubator(final Comparator<Individual> comparator) {
-		logger.setLevel(Level.ALL);
 		Competition<Individual> competition = new Competition<Individual>() {
 
 			@Override

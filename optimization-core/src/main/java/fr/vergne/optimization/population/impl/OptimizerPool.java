@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import fr.vergne.logging.LoggerConfiguration;
 import fr.vergne.optimization.generator.InformedMutator;
 import fr.vergne.optimization.generator.Mutator;
 import fr.vergne.optimization.population.PopulationManager;
@@ -151,7 +152,7 @@ public class OptimizerPool<Individual> implements
 		private final Competition<Individual> competition;
 		private final OptimizerPool<Individual> parentPool;
 		private Individual representative;
-		private final Logger logger = Logger.getAnonymousLogger();
+		public static final Logger logger = LoggerConfiguration.getSimpleLogger();
 
 		public Optimizer(Competition<Individual> competition,
 				Individual individual, OptimizerPool<Individual> parent) {
