@@ -114,7 +114,8 @@ public class OptimizerPool<Individual> implements
 				Iterator<Individual> iterator = remaining.iterator();
 				best = iterator.next();
 				while (iterator.hasNext()) {
-					best = competition.compete(best, iterator.next());
+					Individual winner = competition.compete(best, iterator.next());
+					best = winner == null ? best : winner;
 				}
 				remaining.remove(best);
 				return best;
