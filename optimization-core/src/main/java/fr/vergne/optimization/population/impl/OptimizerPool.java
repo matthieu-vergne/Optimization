@@ -40,13 +40,16 @@ public class OptimizerPool<Individual> implements
 	}
 
 	public void setCompetition(Competition<Individual> competition) {
-		if (!this.competition.equals(competition)) {
+		if (competition == null) {
+			throw new IllegalArgumentException(
+					"You must provide a competition operator.");
+		} else if (competition.equals(this.competition)) {
+			// ignore the change to not loose valuable data
+		} else {
 			this.competition = competition;
 			for (Optimizer<Individual> optimizer : optimizers) {
 				optimizer.reset();
 			}
-		} else {
-			// ignore the change to not loose valuable data
 		}
 	}
 
