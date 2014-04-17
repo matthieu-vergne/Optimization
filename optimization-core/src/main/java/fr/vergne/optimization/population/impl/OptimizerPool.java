@@ -124,7 +124,8 @@ public class OptimizerPool<Individual> implements
 				Iterator<Individual> iterator = remaining.iterator();
 				best = iterator.next();
 				while (iterator.hasNext()) {
-					Individual winner = competition.compete(best, iterator.next());
+					Individual winner = competition.compete(best,
+							iterator.next());
 					best = winner == null ? best : winner;
 				}
 				remaining.remove(best);
@@ -160,7 +161,8 @@ public class OptimizerPool<Individual> implements
 		private final Map<InformedMutator<Individual>, Integer> neighborCounts = new HashMap<InformedMutator<Individual>, Integer>();
 		private final OptimizerPool<Individual> parentPool;
 		private Individual representative;
-		public static final Logger logger = LoggerConfiguration.getSimpleLogger();
+		public static final Logger logger = LoggerConfiguration
+				.getSimpleLogger();
 
 		public Optimizer(Individual individual, OptimizerPool<Individual> parent) {
 			representative = individual;
