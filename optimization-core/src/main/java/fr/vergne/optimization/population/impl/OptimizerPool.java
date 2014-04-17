@@ -37,7 +37,14 @@ public class OptimizerPool<Individual> implements
 	}
 
 	public void setCompetition(Competition<Individual> competition) {
-		this.competition = competition;
+		if (!this.competition.equals(competition)) {
+			this.competition = competition;
+			for (Optimizer<Individual> optimizer : optimizers) {
+				optimizer.reset();
+			}
+		} else {
+			// ignore the change to not loose valuable data
+		}
 	}
 
 	public Competition<Individual> getCompetition() {
@@ -274,6 +281,16 @@ public class OptimizerPool<Individual> implements
 		 */
 		public Individual getRepresentative() {
 			return representative;
+		}
+
+		/**
+		 * Clear all the statistics as if this {@link Optimizer} has just been
+		 * created.
+		 */
+		public void reset() {
+			neighborReferences.clear();
+			neighborLoops.clear();
+			neighborCounts.clear();
 		}
 
 		@Override
