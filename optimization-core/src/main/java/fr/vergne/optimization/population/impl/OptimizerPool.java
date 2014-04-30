@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 
 import fr.vergne.logging.LoggerConfiguration;
@@ -140,6 +141,28 @@ public class OptimizerPool<Individual> implements
 				OptimizerPool.this.remove(best);
 			}
 		};
+	}
+
+	/**
+	 * 
+	 * @param individual
+	 *            the individual to evaluate the optimality for
+	 * @param mutator
+	 *            the mutator on which evaluate the optimality
+	 * @return the optimality of the individual regarding the given mutator
+	 */
+	public double getOptimality(Individual individual,
+			Mutator<Individual> mutator) {
+		for (Optimizer<Individual> optimizer : optimizers) {
+			if (optimizer.getRepresentative().equals(individual)) {
+				return optimizers.iterator().next().getOptimalityWith(mutator);
+			} else {
+				// not this one
+			}
+		}
+		throw new NoSuchElementException(
+				"No such individual has been found in the population: "
+						+ individual);
 	}
 
 	/**
