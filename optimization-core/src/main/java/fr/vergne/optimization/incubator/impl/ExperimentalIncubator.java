@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.logging.Logger;
 
 import fr.vergne.logging.LoggerConfiguration;
@@ -17,6 +18,8 @@ import fr.vergne.optimization.population.Evaluator;
 import fr.vergne.optimization.population.impl.OptimizerPool;
 import fr.vergne.optimization.population.impl.OptimizerPool.Competition;
 import fr.vergne.optimization.population.impl.OptimizerPool.Optimizer;
+import fr.vergne.pareto.ParetoComparator;
+import fr.vergne.pareto.ParetoHelper;
 
 /**
  * This {@link ExperimentalIncubator} has the purpose to provide an optimization
@@ -155,14 +158,55 @@ public class ExperimentalIncubator<Individual> implements Incubator<Individual> 
 
 	private void reduceTo(int maxSize) {
 		if (optimizerPool.size() > 1 && maxSize > 0) {
-			Iterator<Individual> iterator = optimizerPool.getBest();
-			while (iterator.hasNext() && maxSize > 0) {
-				iterator.next();
-				maxSize--;
+			ParetoComparator<Individual> paretoComparator = new ParetoComparator<Individual>();
+			final Comparator<Individual> competitionComparator = new Comparator<Individual>() {
+
+				@Override
+				public int compare(Individual i1, Individual i2) {
+					// best value = better individual
+					Individual winner = optimizerPool.getCompetition().compete(
+							i1, i2);
+					return winner == i1 ? -1 : winner == i2 ? 1 : 0;
+				}
+			};
+			paretoComparator.add(competitionComparator);
+			for (final Mutator<Individual> mutator : mutators) {
+				paretoComparator.add(new Comparator<Individual>() {
+
+					@Override
+					public int compare(Individual i1, Individual i2) {
+						// worst optimality = higher chance to improve
+						Double opt1 = optimizerPool.getOptimality(i1, mutator);
+						Double opt2 = optimizerPool.getOptimality(i2, mutator);
+						return opt1.compareTo(opt2);
+					}
+				});
 			}
-			while (iterator.hasNext()) {
-				iterator.next();
-				iterator.remove();
+			Collection<Individual> candidates = new LinkedList<Individual>(
+					optimizerPool.getPopulation());
+			LinkedList<Individual> sorted = new LinkedList<Individual>();
+			while (!candidates.isEmpty()) {
+				Collection<Individual> bests = ParetoHelper
+						.getMinimalFrontierOf(candidates, paretoComparator);
+				for (Individual best : bests) {
+					candidates.remove(best);
+				}
+				Collection<Individual> subSort = new TreeSet<Individual>(
+						new Comparator<Individual>() {
+
+							@Override
+							public int compare(Individual i1, Individual i2) {
+								int comparison = competitionComparator.compare(
+										i1, i2);
+								return comparison == 0 ? -1 : comparison;
+							}
+						});
+				subSort.addAll(bests);
+				sorted.addAll(subSort);
+			}
+			for (int remove = sorted.size() - maxSize; remove > 0; remove--) {
+				Individual removed = sorted.removeLast();
+				optimizerPool.remove(removed);
 			}
 		} else {
 			// nothing to remove
