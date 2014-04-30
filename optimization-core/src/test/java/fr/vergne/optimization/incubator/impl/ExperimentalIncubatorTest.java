@@ -543,7 +543,7 @@ public class ExperimentalIncubatorTest {
 		assertEquals(0, incubator.getMaxSize());
 		assertEquals(7, incubator.getPopulation().size());
 	}
-	
+
 	@Test
 	public void testMaxSizeWithIncubation() {
 		ExperimentalIncubator<Integer> incubator = new ExperimentalIncubator<Integer>(
@@ -594,20 +594,20 @@ public class ExperimentalIncubatorTest {
 	public void testMinMaxSizeConsistencyCheck() {
 		ExperimentalIncubator<Integer> incubator = new ExperimentalIncubator<Integer>(
 				integerEvaluator);
-		
+
 		incubator.setMinSize(3);
 		incubator.setMaxSize(4);
-		
+
 		incubator.setMinSize(3);
 		incubator.setMaxSize(3);
-		
+
 		incubator.setMinSize(3);
 		try {
 			incubator.setMaxSize(2);
 			fail("No exception thrown.");
 		} catch (IllegalArgumentException e) {
 		}
-		
+
 		incubator.setMaxSize(3);
 		try {
 			incubator.setMinSize(4);
