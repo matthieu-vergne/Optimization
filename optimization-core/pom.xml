@@ -17,7 +17,6 @@
 			<groupId>fr.matthieu-vergne</groupId>
 			<artifactId>logging</artifactId>
 			<version>1.0</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
