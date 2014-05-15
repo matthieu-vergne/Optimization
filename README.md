@@ -117,18 +117,18 @@ Please check the last [release tag](https://github.com/matthieu-vergne/Optimizat
 You can see some examples in the *sample* subproject. If you want to make your own, you can follow these guidelines:
 
 1. Choose an encoding for your solutions, paying attention to its correctness\* ;
-2. Implement a `Comparator` or an `Evaluator`, depending on whether you are able to provide a precise value for each individual (e.g. cost function) or only to make a relative comparison (e.g. between A and B, A is better) ;
+2. Implement a `Comparator` or an `Evaluator` (as a minimization problem) depending on whether you are able to provide a precise value for each individual (e.g. cost function) or only to make a relative comparison (e.g. between A and B, A is better) ;
 3. Suppose that someone gives you one solution, try to identify which kind of modifications could improve it and implement a `Mutator` for each of them ;
 4. Suppose that you already have several locally optimal solutions, each corresponding to a specific area in the solution space, try to identify which kind of modifications could lead you to a new area not yet explored and implement an `Explorator` for each of them ;
-5. If all your explorators need to have at least 1 solution in the population (this should be reflected in their isApplicableOn() method), implement an `Explorator` which generates random solutions (pay attention to its correctness\*) or don't forget to add one or several initial solutions in the incubator before to run it ;
-6. Instantiate the `ExperimentalIncubator` (or extended it and instantiate your own version) ;
+5. If all your explorators need to have at least 1 solution in the population (this should be reflected in their `isApplicableOn()` method), implement an `Explorator` which generates random solutions (pay attention to its correctness\*) or don't forget to add one or several initial solutions in the incubator before to run it ;
+6. Instantiate the `ExperimentalIncubator` (or extend it and instantiate your own version) ;
 7. Add the explorators and mutators you have implemented ;
 8. Add the initial solutions to start from (if any) ;
-9. Run the incubate() method of the incubator until your stopping condition is met (e.g. timeout, number of iterations, threshold).
+9. Run the `incubate()` method of the incubator until your stopping condition is met (e.g. timeout, number of iterations, threshold).
 
 \* When you choose your encoding, it could be that specific configurations are technically possible but semantically impossible. For instance, for the typical travelling salesman problem we want a list of N locations to follow in the order. If your encoding is a list of locations, with each index corresponding to one of the N available locations, you could have a "technically correct" solution which has the same location at different indexes (and miss other locations). It is not a "semantically correct" solution because it does not fit the requirement "pass through each location exactly one time". If you choose an encoding where each index corresponds to one of the remaining locations after we have removed the one already used, you don't have this problem anymore (but you could have others). However, such "non robust" encoding is not necessarily a problem, in the sense that you only need to ensure that:
 
 - your explorators provide only semantically correct solutions
 - your mutators preserve this correctness (if one receives a correct solution, it returns a correct solution)
 
-Having an encoding which ensure correctness is one way, but it could make it harder to generate solutions. Having a more flexible encoding could make the problem and solutions easier to implement. Also, you can always deal with the incorrect solutions by ensuring that, when you have one, its evaluation is always worse than for a correct solution (e.g. increase heavily the cost each time you find an inconsistency).
+Having an encoding which ensure correctness is one way, but it could make it harder to generate solutions. Having a more flexible encoding could make the problem and solutions easier to implement. Also, you can always deal with the incorrect solutions by ensuring that, when you have one, its evaluation is always worse than for a correct solution (e.g. increase heavily the cost each time you find an inconsistency). Yet it can make the search slower by adding useless computation. This is a practical trade-off to consider.
