@@ -27,7 +27,12 @@ import fr.vergne.optimization.population.impl.OptimizerPool.Optimizer;
  * local search but naive restarts for hill climbing algorithms), this
  * implementation aims at providing an optimization algorithm which maximizes
  * the use of the knowledge provided as well as exploiting generic methods to
- * deal with the potential lack of knowledge about the problem at hand.
+ * deal with the potential lack of knowledge about the problem at hand.<br/>
+ * <br/>
+ * The problem optimized is a <b>minimization problem</b>, thus you need to
+ * provide an {@link Evaluator} or a {@link Comparator} such as a better
+ * solution is <b>inferior</b> to a worse solution. This is typically the case
+ * with a cost function, where we want to minimize the cost of a solution.
  * 
  * @author Matthieu Vergne <matthieu.vergne@gmail.com>
  * 
