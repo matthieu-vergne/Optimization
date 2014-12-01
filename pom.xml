@@ -27,8 +27,8 @@
 	
 	<licenses>
 		<license>
-			<name>BSD</name>
-			<url>http://www.freebsd.org/copyright/license.html</url>
+			<name>CC0</name>
+			<url>http://creativecommons.org/publicdomain/zero/1.0/</url>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
