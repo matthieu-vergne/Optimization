@@ -15,8 +15,8 @@
 	</modules>
 
 	<scm>
-		<connection>scm:git:git://github.com/matthieu-vergne/Optimization.git</connection>
-		<developerConnection>scm:git:git://github.com/matthieu-vergne/Optimization.git</developerConnection>
+		<connection>scm:git:https://matthieu-vergne@github.com/matthieu-vergne/Optimization.git</connection>
+		<developerConnection>scm:git:https://matthieu-vergne@github.com/matthieu-vergne/Optimization.git</developerConnection>
 		<url>scm:git:git://github.com/matthieu-vergne/Optimization.git</url>
 	</scm>
 	
