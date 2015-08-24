@@ -16,7 +16,6 @@ public abstract class AbstractPathTest<Path extends AbstractPath> {
 
 	protected abstract Path generatePath(List<Location> locations);
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testEquals() {
 		Location l1 = new Location(1, 0);

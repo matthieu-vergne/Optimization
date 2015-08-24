@@ -117,7 +117,6 @@ public class ExperimentalIncubatorTest {
 
 	@Test
 	public void testMutators() {
-		@SuppressWarnings("unchecked")
 		List<Mutator<Integer>> mutators = Arrays.asList(mutatorPlusOne,
 				mutatorModulo);
 		ExperimentalIncubator<Integer> manager = new ExperimentalIncubator<Integer>(
@@ -135,7 +134,6 @@ public class ExperimentalIncubatorTest {
 
 	@Test
 	public void testExplorators() {
-		@SuppressWarnings("unchecked")
 		List<Explorator<Integer>> explorators = Arrays.asList(randomExplorator);
 		ExperimentalIncubator<Integer> manager = new ExperimentalIncubator<Integer>(
 				integerEvaluator);

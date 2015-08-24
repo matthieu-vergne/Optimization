@@ -38,7 +38,6 @@ public class TSP1 extends AbstractTSP<Path1> {
 		return incubator;
 	}
 
-	@SuppressWarnings("unchecked")
 	protected Collection<Mutator<Path1>> getMutators(
 			Collection<Location> locations) {
 		Mutator<Path1> littleMutation = new Mutator<Path1>() {
@@ -91,7 +90,6 @@ public class TSP1 extends AbstractTSP<Path1> {
 		return Arrays.asList(littleMutation, reverseMutation);
 	}
 
-	@SuppressWarnings("unchecked")
 	protected Collection<Explorator<Path1>> getExplorators(
 			final Collection<Location> locations) {
 		Explorator<Path1> random = new Explorator<Path1>() {
